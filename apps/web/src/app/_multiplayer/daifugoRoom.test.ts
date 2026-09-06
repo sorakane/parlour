@@ -253,6 +253,20 @@ describe('Daifugo room recovery', () => {
       1500,
       10,
     );
+    // One peer electing itself does not mean every survivor has imported its
+    // snapshot yet. Wait for consensus before checking ownership or sending.
+    await eventually(
+      () => {
+        const winner = survivors.find((peer) => peer.getSnapshot().isHost)!;
+        const hostId = winner.getSnapshot().room!.peerId;
+        for (const peer of survivors) {
+          expect(peer.getSnapshot().room!.hostId).toBe(hostId);
+          expect(peer.getSnapshot().connection).toBe('connected');
+        }
+      },
+      1500,
+      10,
+    );
     await synced(survivors);
     for (const peer of survivors) {
       expect(peer.getSnapshot().stage).toBe('table');
