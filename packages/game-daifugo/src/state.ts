@@ -7,6 +7,8 @@ export interface StandingSet {
   cards: readonly CardId[];
   /** table-order rank, 3…15 */
   rank: number;
+  kind: 'set' | 'run';
+  high: number;
   suits: readonly string[];
   jokerOnly: boolean;
 }
@@ -16,6 +18,14 @@ export interface ExchangeMove {
   from: SeatId;
   to: SeatId;
   cards: readonly CardId[];
+}
+
+export interface PendingPlay {
+  seat: SeatId;
+  effects: readonly { kind: 'give' | 'discard'; count: number; recipient: SeatId | null }[];
+  clearReason: string | null;
+  skips: number;
+  forbiddenReason: string | null;
 }
 
 export type DaifugoRole = 'daifugo' | 'vice' | 'neutral' | 'vice-scum' | 'scum';
@@ -30,6 +40,10 @@ export interface DaifugoState {
   /** Stable player ids, ordered independently of table ownership. */
   seatOrder: readonly SeatId[];
   revolution: boolean;
+  rankLocked: boolean;
+  pendingPlay: PendingPlay | null;
+  /** First elimination is ranked lowest; the next is one place above it. */
+  eliminated: readonly { seat: SeatId; reason: string }[];
   jackBack: boolean;
   lockedSuits: readonly string[];
   openingCard: CardId | null;

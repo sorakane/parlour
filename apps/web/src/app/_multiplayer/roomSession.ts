@@ -278,6 +278,8 @@ export class MultiplayerRoomSession {
   /** A reveal arrived before this client finished attaching its local seat. */
   private dealRevealStarted = false;
   private sequence = 0;
+  /** A reload keeps the profile but must not repeat its accepted action IDs. */
+  private readonly actionSessionId = crypto.randomUUID();
   private recycleActionPending = false;
   /** A no-match jump-in is declined from here, so it cannot re-enter send. */
   private autoDeclinePending = false;
@@ -1076,7 +1078,7 @@ export class MultiplayerRoomSession {
       throw new Error('your seat is not connected');
     }
     this.transport.send({
-      id: `${this.profile.profileId}:${this.sequence++}`,
+      id: `${this.actionSessionId}:${this.sequence++}`,
       seat: this.snapshot.localSeat,
       move,
       payload,

@@ -1,11 +1,10 @@
 'use client';
 
-import type { GameSession } from '@parlour/engine';
 import type { DaifugoRules, DaifugoState } from '@parlour/game-daifugo';
 import { DaifugoTableScreen } from '@/components/table/daifugo/DaifugoTableScreen';
 import { defineTablePack, turnBasedDriver } from '@/components/table/GameTablePage';
 import { daifugoModeForRules } from '@/lib/daifugo/modes';
-import { daifugoTableView } from '@/lib/daifugo/view';
+import { daifugoTableView, daifugoConfirmMove } from '@/lib/daifugo/view';
 import { roomMatchId } from '@/lib/table/useMatchReport';
 import {
   DaifugoTransport,
@@ -18,13 +17,6 @@ import { daifugoRulesFor, useDaifugoSetupStore } from '@/stores/daifugoSetup';
 
 /** The rank parade runs past the usual beat before the podium takes over. */
 const PODIUM_DELAY_MS = 1400;
-
-function pickExchangeMove(session: GameSession<DaifugoState, DaifugoRules>, seat: number): string {
-  if ((session.phase.actors ?? []).includes(seat) && session.phase.phase === 'exchange-give') {
-    return 'giveCards';
-  }
-  return 'returnCards';
-}
 
 function localLegalMoves(snapshot: DaifugoSnapshot) {
   const { session } = snapshot;
@@ -86,18 +78,7 @@ export const daifugoTablePack = defineTablePack<
         fxKey={fxKey}
         busy={!actingLocally}
         error={error}
-        onConfirm={(cards) =>
-          dispatch(
-            snapshot.session.phase.phase === 'exchange-give' ||
-              ((snapshot.session.phase.actors ?? []).includes(0) &&
-                snapshot.session.phase.phase === 'exchange-give')
-              ? 'giveCards'
-              : snapshot.session.state.awaitingReturn?.seat === 0
-                ? 'returnCards'
-                : 'playSet',
-            { cards },
-          )
-        }
+        onConfirm={(cards) => dispatch(daifugoConfirmMove(snapshot.session.phase.phase), { cards })}
         onPass={() => dispatch('pass')}
         onQuit={quit}
       />
@@ -152,14 +133,7 @@ export const daifugoTablePack = defineTablePack<
         fxKey={snapshot.fxKey}
         busy={!isLocalActing}
         error={error}
-        onConfirm={(cards) =>
-          dispatch(
-            session.phase.phase.startsWith('exchange')
-              ? pickExchangeMove(session, localSeat)
-              : 'playSet',
-            { cards },
-          )
-        }
+        onConfirm={(cards) => dispatch(daifugoConfirmMove(session.phase.phase), { cards })}
         onPass={() => dispatch('pass')}
         onQuit={quit}
       />

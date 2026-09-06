@@ -64,6 +64,7 @@ export default function DaifugoSetupPage() {
       </SetupPanel>
 
       <RuleSettings
+        label="ローカルルールを設定"
         schema={schema}
         values={daifugoRulesFor(mode, overrides)}
         onChange={setRule as (key: string, value: string | number | boolean) => void}

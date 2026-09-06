@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import { orderedHand, type FxEvent } from '@parlour/engine';
 import { type FxCue } from '@/lib/table/fx-motion';
-import { daifugoCatalog, DAIFUGO_DECK, orderOf } from '@parlour/game-daifugo';
+import {
+  daifugoCatalog,
+  DAIFUGO_DECK,
+  orderOf,
+  MAX_PLAY_SIZE,
+  forbiddenFinishReason,
+} from '@parlour/game-daifugo';
 import { getAvatar } from '@/lib/avatars';
 import { PRESIDENT_SFX_PACK } from '@/lib/audio/sfx';
 import { useMatchTension } from '@/lib/audio/tension';
@@ -89,8 +95,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
 
   const moments = useRoleMoments(props.fx, props.fxKey);
 
-  const requiredCount =
-    view?.decision === 'give'
+  const requiredCount = view?.decision?.startsWith('effect-')
+    ? (view.pendingEffect?.count ?? 0)
+    : view?.decision === 'give'
       ? view.giveCount
       : view?.decision === 'return'
         ? view.returnCount
@@ -108,12 +115,15 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
       const chosen = selected.map(orderOf).sort((a, b) => b - a);
       return selected.length === view.giveCount && chosen.every((rank, i) => rank === strongest[i]);
     }
+    if (view.decision?.startsWith('effect-')) return selected.length === view.pendingEffect?.count;
     if (view.decision === 'return') return selected.length === view.returnCount;
     if (view.decision === 'lead-or-follow') return isValidLocalSet(view, selected);
     return false;
   })();
 
   const confirmLabel = (() => {
+    if (view?.decision === 'effect-give') return `${requiredCount}枚 渡す`;
+    if (view?.decision === 'effect-discard') return `${requiredCount}枚 捨てる`;
     if (view?.decision === 'give') return `${requiredCount}枚 渡す`;
     if (view?.decision === 'return') return `${requiredCount}枚 返す`;
     return '出す';
@@ -142,7 +152,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
       if (cards.includes(card)) {
         return { key: props.fxKey, cards: cards.filter((entry) => entry !== card) };
       }
-      const cap = requiredCount || 6;
+      const cap = requiredCount || (view?.rules.stairs ? MAX_PLAY_SIZE : 6);
       if (cards.length >= cap) return { key: props.fxKey, cards };
       return { key: props.fxKey, cards: [...cards, card] };
     });
@@ -178,7 +188,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
               key={player.seat}
               player={player}
               active={view.activeSeat === player.seat}
-              finished={view.finishedOrder.includes(player.seat)}
+              finished={
+                view.finishedOrder.includes(player.seat) || Boolean(player.eliminatedReason)
+              }
               displayCount={deal.visibleCount(player.seat, player.handCount)}
             />
           ))}
@@ -196,20 +208,6 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             rootRef={rootRef}
             renderCue={(cue) => <Cue cue={cue} localSeat={view.localSeat} />}
           />
-          {(view.decision === 'give' || view.decision === 'return') && !localBusy && (
-            <div className={`${styles.exchangeBanner} panel-soft`} data-testid="exchange-banner">
-              <strong>
-                {view.decision === 'give'
-                  ? 'カード交換 — 強いカードを渡す'
-                  : 'カード交換 — 好きなカードを返す'}
-              </strong>
-              <span className={styles.exchangeHint}>
-                {view.decision === 'give'
-                  ? '手札から強い順に選んでください。'
-                  : '返すカードを選んでください。'}
-              </span>
-            </div>
-          )}
           {moments.current && (
             <div className={styles.celebration} aria-live="polite" data-testid="role-moment">
               <motion.div
@@ -242,6 +240,47 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
               .map((seat) => view.players.find((p) => p.seat === seat)?.name ?? seat)
               .join(' → ')}
           </span>
+          {(view.decision === 'give' ||
+            view.decision === 'return' ||
+            view.decision?.startsWith('effect-')) &&
+            !localBusy && (
+              <div
+                className={`${daifugoStyles.choiceBanner} panel-soft`}
+                data-testid="exchange-banner"
+              >
+                <strong>
+                  {view.decision === 'effect-give'
+                    ? `7渡し — ${view.pendingEffect?.recipientName ?? '次の人'}へ${requiredCount}枚`
+                    : view.decision === 'effect-discard'
+                      ? `10捨て — ${requiredCount}枚捨てる`
+                      : view.decision === 'give'
+                        ? 'カード交換 — 強いカードを渡す'
+                        : 'カード交換 — 好きなカードを返す'}
+                </strong>
+                <span className={styles.exchangeHint}>
+                  {view.decision?.startsWith('effect-')
+                    ? '手札から好きなカードを選んでください。'
+                    : view.decision === 'give'
+                      ? '手札から強い順に選んでください。'
+                      : '返すカードを選んでください。'}
+                </span>
+              </div>
+            )}
+          {view.decision === 'lead-or-follow' &&
+            selectionValid &&
+            selected.length === view.hand.length &&
+            forbiddenFinishReason(view, selected) && (
+              <span role="status" className={daifugoStyles.selection}>
+                反則上がり：このまま出すと下位になります
+              </span>
+            )}
+          {view.decision?.startsWith('effect-') &&
+            view.rules.forbidEffectFinish &&
+            requiredCount === view.hand.length && (
+              <span role="status" className={daifugoStyles.selection}>
+                この効果で上がると反則になります
+              </span>
+            )}
           {selected.length > 0 && (
             <span className={daifugoStyles.selection} aria-live="polite">
               選択：{selected.map((card) => DAIFUGO_DECK.faces[card]?.short ?? card).join('・')}
@@ -273,7 +312,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
               </button>
             </>
           )}
-          {(view.decision === 'give' || view.decision === 'return') && (
+          {(view.decision === 'give' ||
+            view.decision === 'return' ||
+            view.decision?.startsWith('effect-')) && (
             <>
               <span className={styles.selectionCount}>
                 選択 {selected.length}/{requiredCount}
@@ -338,6 +379,9 @@ function Seat({
         className={tableStyles.avatar}
       />
       <SeatNameplate name={player.name} isBot={player.isBot} />
+      {player.eliminatedReason && (
+        <span className={styles.scoreChip}>{player.eliminatedReason}</span>
+      )}
       {player.role && ROLE_LABELS[player.role] && (
         <span
           className={`${styles.roleBadge} ${
@@ -372,7 +416,8 @@ function CenterPile({ view, deal }: { view: DaifugoTableView; deal: DealPresenta
         {sets.map((set, index) => (
           <div
             key={`${set.rank}-${index}`}
-            className={`${styles.pileSet} ${index === sets.length - 1 ? styles.pileSetTop : ''}`}
+            className={`${styles.pileSet} ${daifugoStyles.pileSet} ${index === sets.length - 1 ? styles.pileSetTop : ''}`}
+            style={{ '--pile-count': set.cards.length } as CSSProperties}
           >
             {set.cards.map((card, cardIndex) => (
               <PlayingCard
@@ -380,9 +425,11 @@ function CenterPile({ view, deal }: { view: DaifugoTableView; deal: DealPresenta
                 card={card}
                 face={card.startsWith('J') ? DAIFUGO_DECK.faces[card] : undefined}
                 rotation={
-                  index === sets.length - 1
-                    ? discardRotation(card, cardIndex)
-                    : (cardIndex - set.cards.length / 2) * 6
+                  set.cards.length > 4
+                    ? 0
+                    : index === sets.length - 1
+                      ? discardRotation(card, cardIndex)
+                      : (cardIndex - set.cards.length / 2) * 6
                 }
               />
             ))}
@@ -391,6 +438,7 @@ function CenterPile({ view, deal }: { view: DaifugoTableView; deal: DealPresenta
       </div>
       {standing && (
         <span className={styles.rankChip} data-testid="standing-chip">
+          {standing.kind === 'run' ? '階段 ' : ''}
           {standing.rank === 16
             ? 'JOKER'
             : standing.rank === 14
@@ -429,7 +477,8 @@ function LocalHand({
     daifugoCatalog.handOrder,
   );
   const visibleHand = useAdmittedHand(plannedHand);
-  const exchanging = view.decision === 'give' || view.decision === 'return';
+  const exchanging =
+    view.decision === 'give' || view.decision === 'return' || view.decision?.startsWith('effect-');
   const canPick = !busy && (exchanging || view.decision === 'lead-or-follow');
   const showLegality = !busy && view.decision === 'lead-or-follow';
 

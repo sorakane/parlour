@@ -21,11 +21,13 @@ import { daifugoDeck, tryOrder } from './deck';
 import { DaifugoState, StandingSet, type DaifugoRole } from './state';
 import { DaifugoRules, daifugoConfig } from './config';
 import { daifugoBots } from './bots';
+import { playEffects, forbiddenFinishReason } from './effects';
 import {
   combination,
   playableSets,
   sameSuits,
-  spadeReturn,
+  rankStep,
+  reversed,
   validateCombination,
 } from './combinations';
 
@@ -74,7 +76,12 @@ export function handOf(state: DaifugoState, seat: SeatId): readonly CardId[] {
 export function activeSeats(state: DaifugoState): SeatId[] {
   const out: SeatId[] = [];
   for (let seat = 0; seat < state.seats; seat++) {
-    if (!state.finished.includes(seat) && handOf(state, seat).length > 0) out.push(seat);
+    if (
+      !state.finished.includes(seat) &&
+      !state.eliminated.some((entry) => entry.seat === seat) &&
+      handOf(state, seat).length > 0
+    )
+      out.push(seat);
   }
   return out;
 }
@@ -156,6 +163,13 @@ export function matchResult(state: DaifugoState): MatchResult {
 
 export function phaseFor(state: DaifugoState): PhaseState {
   const round = state.deal + 1;
+  if (state.pendingPlay)
+    return {
+      phase: `effect-${state.pendingPlay.effects[0]!.kind}`,
+      actor: state.pendingPlay.seat,
+      round,
+      label: 'カード効果を選択',
+    };
   if (matchOver(state)) return { phase: 'ended', actor: null, round };
   if (state.awaitingGive.length > 0) {
     return {
@@ -225,6 +239,7 @@ function freshTrick() {
     lockedOut: [] as SeatId[],
     jackBack: false,
     lockedSuits: [] as string[],
+    rankLocked: false,
     openingCard: null as CardId | null,
   };
 }
@@ -266,6 +281,8 @@ function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
     ...freshTrick(),
     captured: [],
     revolution: false,
+    eliminated: [],
+    pendingPlay: null,
     seatOrder:
       state.rules.seatOrder === 'random'
         ? ctx.rng.shuffle(state.seatOrder)
@@ -304,6 +321,8 @@ function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
 function completeDeal(state: DaifugoState, ctx: MoveCtx): DaifugoState {
   const finished = [...state.finished];
   for (const seat of activeSeats(state)) finished.push(seat);
+  for (const entry of [...state.eliminated].reverse())
+    if (!finished.includes(entry.seat)) finished.push(entry.seat);
   const score = state.score.slice();
   finished.forEach((seat, index) => {
     score[seat] = (score[seat] ?? 0) + pointsForFinish(state.seats, index);
@@ -320,6 +339,7 @@ function completeDeal(state: DaifugoState, ctx: MoveCtx): DaifugoState {
     finished,
     score,
     lastOrder: finished,
+    pendingPlay: null,
     awaitingGive: [],
     awaitingReturn: null,
     exchangeLog: [],
@@ -399,9 +419,132 @@ function sweepPile(
     ...freshTrick(),
     captured: [...state.captured, ...state.pile],
   };
-  const leader = state.finished.includes(winner) ? nextActiveSeat(swept, winner) : winner;
+  const leader = activeSeats(swept).includes(winner) ? winner : nextActiveSeat(swept, winner);
   return { ...swept, turn: leader };
 }
+
+/** Recipient order ignores passes: a passed player can still receive cards. */
+function nextLivingSeat(state: DaifugoState, from: SeatId): SeatId | null {
+  const active = activeSeats(state);
+  const index = state.seatOrder.indexOf(from);
+  for (let step = 1; step < state.seats; step++) {
+    const seat = state.seatOrder[(index + step) % state.seats]!;
+    if (active.includes(seat)) return seat;
+  }
+  return null;
+}
+function eliminate(state: DaifugoState, seat: SeatId, reason: string, ctx: MoveCtx): DaifugoState {
+  if (state.finished.includes(seat) || state.eliminated.some((entry) => entry.seat === seat))
+    return state;
+  ctx.fx.emit('daifugo.eliminated', { seat, reason });
+  return {
+    ...state,
+    hands: state.hands.map((hand, index) => (index === seat ? [] : hand)),
+    captured: [...state.captured, ...handOf(state, seat)],
+    eliminated: [...state.eliminated, { seat, reason }],
+  };
+}
+/** Suspend before advancing turns. Everything needed to resume lives in the replay state. */
+function continuePlay(state: DaifugoState, ctx: MoveCtx): DaifugoState {
+  const pending = state.pendingPlay!;
+  const effect = pending.effects[0];
+  if (effect && handOf(state, pending.seat).length > 0) {
+    return {
+      ...state,
+      turn: pending.seat,
+      pendingPlay: {
+        ...pending,
+        effects: [
+          { ...effect, count: Math.min(effect.count, handOf(state, pending.seat).length) },
+          ...pending.effects.slice(1),
+        ],
+      },
+    };
+  }
+  let next: DaifugoState = { ...state, pendingPlay: null };
+  const seat = pending.seat;
+  if (!handOf(next, seat).length) {
+    if (pending.forbiddenReason)
+      next = eliminate(next, seat, `反則：${pending.forbiddenReason}`, ctx);
+    else {
+      next = { ...next, finished: [...next.finished, seat] };
+      ctx.fx.emit(DaifugoFx.Out, { seat, place: next.finished.length }, SET_STAGGER_MS * 2);
+      const previousWinner = next.lastOrder?.[0];
+      if (
+        next.rules.miyako &&
+        next.finished.length === 1 &&
+        previousWinner !== undefined &&
+        previousWinner !== seat
+      )
+        next = eliminate(next, previousWinner, '都落ち', ctx);
+    }
+  }
+  if (activeSeats(next).length <= 1) return completeDeal(next, ctx);
+  if (pending.clearReason || undecidedRivals(next).length === 0) {
+    next = sweepPile(next, seat, pending.clearReason ?? 'passed-out', ctx);
+  } else {
+    let actor = nextActiveSeat(next, seat);
+    for (let i = 0; i < pending.skips && actor !== null; i++) {
+      next = { ...next, passedCycle: [...next.passedCycle, actor] };
+      actor = nextActiveSeat(next, actor);
+    }
+    next = actor === null ? sweepPile(next, seat, 'skipped-out', ctx) : { ...next, turn: actor };
+  }
+  ctx.fx.emit(Fx.TurnRing, { seat: next.turn ?? seat }, 80);
+  return next;
+}
+
+const resolveEffect: Move<DaifugoState> = {
+  validate(state, seat, payload) {
+    const pending = state.pendingPlay;
+    if (!pending || pending.seat !== seat)
+      return error('no-effect', 'この人のカード選択待ちではありません。');
+    const cards = payloadCardList(payload);
+    if (!cards || cards.length !== pending.effects[0]!.count)
+      return error('wrong-count', `${pending.effects[0]!.count}枚選んでください。`);
+    if (!heldOnce(handOf(state, seat), cards))
+      return error('not-in-hand', '手札から重複しないカードを選んでください。');
+    return true;
+  },
+  apply(state, seat, payload, ctx) {
+    const cards = payloadCardList(payload)!;
+    const pending = state.pendingPlay!;
+    const effect = pending.effects[0]!;
+    let hands = removeFromHand(state.hands, seat, cards);
+    let captured = state.captured;
+    if (effect.kind === 'give') {
+      hands = addToHand(hands, effect.recipient!, cards);
+      exchangeFlight(ctx, seat, effect.recipient!, cards);
+    } else {
+      captured = [...captured, ...cards];
+      cards.forEach((card, index) =>
+        ctx.fx.emit(Fx.DiscardCard, { card, seat, to: 'discard' }, index * SET_STAGGER_MS),
+      );
+    }
+    ctx.fx.emit('daifugo.effect', {
+      seat,
+      kind: effect.kind,
+      count: cards.length,
+      recipient: effect.recipient,
+    });
+    return continuePlay(
+      {
+        ...state,
+        hands,
+        captured,
+        pendingPlay: {
+          ...pending,
+          effects: pending.effects.slice(1),
+          forbiddenReason:
+            hands[seat]!.length === 0 && state.rules.forbidEffectFinish
+              ? '効果での上がり'
+              : pending.forbiddenReason,
+        },
+      },
+      ctx,
+    );
+  },
+};
 
 const playSet: Move<DaifugoState> = {
   validate(state, seat, payload) {
@@ -420,67 +563,48 @@ const playSet: Move<DaifugoState> = {
   },
   apply(state, seat, payload, ctx) {
     const cards = payloadCardList(payload)!;
-    const set = combination(cards)!;
-    const rank = set.rank;
+    const set = combination(cards, state.rules)!;
+    const effects = playEffects(state, cards);
     const hands = removeFromHand(state.hands, seat, cards);
-    cards.forEach((card, index) => {
-      ctx.fx.emit(Fx.DiscardCard, { card, seat, to: 'discard' }, index * SET_STAGGER_MS);
-    });
-    ctx.fx.emit(DaifugoFx.Set, { seat, count: cards.length, rank });
-
-    let next: DaifugoState = {
+    cards.forEach((card, index) =>
+      ctx.fx.emit(Fx.DiscardCard, { card, seat, to: 'discard' }, index * SET_STAGGER_MS),
+    );
+    ctx.fx.emit(DaifugoFx.Set, { seat, count: cards.length, rank: set.rank, kind: set.kind });
+    const matchingSuits = state.standing && sameSuits(state.standing.suits, set.suits);
+    const adjacent =
+      state.standing &&
+      set.rank === state.standing.rank + (reversed(state) ? -1 : 1) * rankStep(state);
+    const recipient = nextLivingSeat(state, seat);
+    const next: DaifugoState = {
       ...state,
       hands,
       pile: [...state.pile, ...cards],
       standing: { seat, cards, ...set },
       openingCard: null,
-      revolution:
-        state.rules.revolution && cards.length >= state.rules.revolutionCount
-          ? !state.revolution
-          : state.revolution,
-      jackBack:
-        state.rules.jackBack && cards.some((card) => card.slice(1) === '11')
-          ? !state.jackBack
-          : state.jackBack,
+      revolution: effects.revolution ? !state.revolution : state.revolution,
+      jackBack: effects.jackBack ? !state.jackBack : state.jackBack,
       lockedSuits:
-        state.rules.suitLock && state.standing && sameSuits(state.standing.suits, set.suits)
+        (state.rules.suitLock || (state.rules.strictLock && adjacent)) && matchingSuits
           ? set.suits
           : state.lockedSuits,
+      rankLocked: state.rankLocked || Boolean(state.rules.strictLock && matchingSuits && adjacent),
       passedCycle: [],
+      pendingPlay: {
+        seat,
+        clearReason: effects.clearReason,
+        skips: effects.skips,
+        forbiddenReason: hands[seat]!.length === 0 ? forbiddenFinishReason(state, cards) : null,
+        effects: [
+          ...(effects.give && recipient !== null
+            ? [{ kind: 'give' as const, count: effects.give, recipient }]
+            : []),
+          ...(effects.discard
+            ? [{ kind: 'discard' as const, count: effects.discard, recipient: null }]
+            : []),
+        ],
+      },
     };
-
-    const wentOut = handOf(next, seat).length === 0;
-    if (wentOut) {
-      next = { ...next, finished: [...next.finished, seat] };
-      ctx.fx.emit(DaifugoFx.Out, { seat, place: next.finished.length }, SET_STAGGER_MS * 2);
-    }
-
-    const clearsPile = spadeReturn(state, cards)
-      ? 'spade-three'
-      : state.rules.eightCut && cards.some((card) => card.slice(1) === '8')
-        ? 'eight-cut'
-        : undecidedRivals(next).length === 0
-          ? 'passed-out'
-          : null;
-
-    if (clearsPile) {
-      next = sweepPile(next, seat, clearsPile, ctx);
-      ctx.fx.emit(Fx.TurnRing, { seat: next.turn ?? seat }, 80);
-    } else {
-      let actor = nextActiveSeat(next, seat);
-      const skips = next.rules.fiveSkip ? cards.filter((card) => card.slice(1) === '5').length : 0;
-      for (let skip = 0; skip < skips && actor !== null; skip++) {
-        next = { ...next, passedCycle: [...next.passedCycle, actor] };
-        actor = nextActiveSeat(next, actor);
-      }
-      next = actor === null ? sweepPile(next, seat, 'skipped-out', ctx) : { ...next, turn: actor };
-      ctx.fx.emit(Fx.TurnRing, { seat: next.turn ?? seat }, 80);
-    }
-
-    if (next.finished.length >= next.seats - 1) {
-      next = completeDeal(next, ctx);
-    }
-    return next;
+    return continuePlay(next, ctx);
   },
 };
 
@@ -644,6 +768,9 @@ function legalMovesForSeat(
         ? [...sets, { id: 'pass' }]
         : sets;
     }
+    case 'effect-give':
+    case 'effect-discard':
+      return phase.actor === seat ? [{ id: 'resolveEffect' }] : [];
     case 'exchange-give':
       return (phase.actors ?? []).includes(seat) ? [{ id: 'giveCards' }] : [];
     case 'exchange-return':
@@ -695,6 +822,8 @@ function initialState(seats: number, rules: DaifugoRules): DaifugoState {
     seats,
     seatOrder: Array.from({ length: seats }, (_, seat) => seat),
     revolution: false,
+    eliminated: [],
+    pendingPlay: null,
     dealLeader: 0,
     rules,
     score: Array.from({ length: seats }, () => 0),
@@ -733,7 +862,7 @@ export function createDaifugoDef(
     howToPlay: daifugoHowToPlay,
     configSchema: daifugoConfig,
     setup,
-    moves: { playSet, pass, giveCards, returnCards, openNextDeal },
+    moves: { playSet, pass, resolveEffect, giveCards, returnCards, openNextDeal },
     flow,
     playerView(state, seat) {
       return {

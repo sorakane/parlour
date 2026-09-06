@@ -1,5 +1,5 @@
 .actions.actions {
-  max-width: calc(100vw - 2rem);
+  max-width: min(30rem, calc(100vw - 2rem));
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
@@ -19,4 +19,28 @@
   font-size: 0.85rem;
   color: #fff2bc;
   text-shadow: 0 1px 4px #000;
+}
+.choiceBanner {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.85rem;
+  text-align: center;
+}
+
+/* Keep even a long staircase centered and inside a narrow phone viewport. */
+.pileSet.pileSet {
+  --pile-card-width: clamp(4rem, 14vw, 6rem);
+  --pile-step: min(2rem, calc((80vw - var(--pile-card-width)) / max(1, var(--pile-count) - 1)));
+  transform: translate(-50%, -50%);
+  width: max-content;
+}
+.pileSet.pileSet > [data-card-chassis] {
+  flex: 0 0 var(--pile-card-width);
+  width: var(--pile-card-width);
+  margin-inline: 0;
+}
+.pileSet.pileSet > [data-card-chassis] + [data-card-chassis] {
+  margin-left: calc(var(--pile-step) - var(--pile-card-width));
 }

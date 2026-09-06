@@ -79,7 +79,16 @@ class MockDataChannel {
   peer?: MockDataChannel;
 
   send(data: string) {
-    queueMicrotask(() => this.peer?.onmessage?.(new MessageEvent('message', { data })));
+    queueMicrotask(() => {
+      if (this.readyState === 'open' && this.peer?.readyState === 'open') {
+        this.peer.onmessage?.(new MessageEvent('message', { data }));
+      }
+    });
+  }
+
+  close() {
+    this.readyState = 'closed';
+    if (this.peer) this.peer.readyState = 'closed';
   }
 
   open() {
@@ -112,6 +121,7 @@ class MockPeerConnection {
   ondatachannel: RTCPeerConnection['ondatachannel'] = null;
   onconnectionstatechange: RTCPeerConnection['onconnectionstatechange'] = null;
   private outgoing?: MockDataChannel;
+  private incoming?: MockDataChannel;
   private initiator?: MockPeerConnection;
 
   constructor(
@@ -131,6 +141,7 @@ class MockPeerConnection {
   async createAnswer() {
     if (!this.initiator?.outgoing) throw new Error('offer did not include a data channel');
     const incoming = new MockDataChannel();
+    this.incoming = incoming;
     incoming.peer = this.initiator.outgoing;
     this.initiator.outgoing.peer = incoming;
     const onDataChannel = this.ondatachannel as ((event: RTCDataChannelEvent) => void) | null;
@@ -154,6 +165,8 @@ class MockPeerConnection {
   async addIceCandidate() {}
   close() {
     this.connectionState = 'closed';
+    this.outgoing?.close();
+    this.incoming?.close();
   }
 }
 
@@ -172,135 +185,163 @@ async function eventually(assertion: () => void, attempts = 500, delayMs = 10) {
 describe('Daifugo room recovery', () => {
   const opened: MultiplayerRoomSession[] = [];
   afterEach(() => opened.splice(0).forEach((peer) => peer.close()));
-  it('synchronizes moves, reclaims a reloaded guest, and migrates the host without losing the event log', async () => {
-    const broker = new MockSignalingBroker();
-    const rtc = new MockRtcNetwork();
-    const open = (seat: number, suffix = '') => {
-      const peer = new MultiplayerRoomSession(
-        { name: `P${seat}`, avatarId: 'ember', profileId: `daifugo-${seat}` },
-        {
-          signaling: broker.signaling(`daifugo-${seat}${suffix}`),
-          peerConnection: rtc.factory(`daifugo-${seat}${suffix}`),
-          seed: 4242,
-          heartbeatIntervalMs: 100,
-          heartbeatTimeoutMs: 5000,
-          reconnectGraceMs: 30000,
-        },
-      );
-      opened.push(peer);
-      return peer;
-    };
-    const peers = [0, 1, 2, 3].map((seat) => open(seat));
-    const host = peers[0]!;
-    const room = await host.create({
-      gameId: 'daifugo',
-      seats: 4,
-      config: daifugoConfig.resolve({ seatOrder: 'random', fiveSkip: true, targetPoints: 40 }),
-    });
-    for (let seat = 1; seat < 4; seat++) {
-      await peers[seat]!.join(room.code);
-      await eventually(() => expect(peers[seat]!.getSnapshot().localSeat).toBe(seat));
-    }
-    await host.start();
-    await eventually(() =>
-      expect(peers.every((p) => p.getSnapshot().stage === 'table')).toBe(true),
-    );
-    const live = (peer: MultiplayerRoomSession) =>
-      multiplayerSession<DaifugoState, DaifugoRules>(peer.getSnapshot(), 'daifugo')!;
-    const synced = async (group = peers) =>
-      eventually(() => {
-        expect(group.map((p) => p.getSnapshot().error)).toEqual(group.map(() => null));
-        expect(new Set(group.map((p) => stateHash(live(p).state))).size).toBe(1);
-        expect(new Set(group.map((p) => live(p).log.length)).size).toBe(1);
+  it.each(['normal', 'give', 'discard'] as const)(
+    'preserves %s state through guest reload and host migration',
+    async (effectKind) => {
+      const broker = new MockSignalingBroker();
+      const rtc = new MockRtcNetwork();
+      const open = (seat: number, suffix = '') => {
+        const peer = new MultiplayerRoomSession(
+          { name: `P${seat}`, avatarId: 'ember', profileId: `daifugo-${seat}` },
+          {
+            signaling: broker.signaling(`daifugo-${seat}${suffix}`),
+            peerConnection: rtc.factory(`daifugo-${seat}${suffix}`),
+            seed: 4242,
+            heartbeatIntervalMs: 100,
+            heartbeatTimeoutMs: 5000,
+            reconnectGraceMs: 30000,
+          },
+        );
+        opened.push(peer);
+        return peer;
+      };
+      const peers = [0, 1, 2, 3].map((seat) => open(seat));
+      const host = peers[0]!;
+      const room = await host.create({
+        gameId: 'daifugo',
+        seats: 4,
+        config: daifugoConfig.resolve({
+          seatOrder: 'random',
+          fiveSkip: true,
+          targetPoints: 40,
+          stairs: true,
+          stairsRevolution: true,
+          sevenGive: true,
+          tenDiscard: true,
+          strictLock: true,
+        }),
       });
-    for (let step = 0; step < 18; step++) {
-      await synced();
-      const state = live(host);
-      const actor = state.phase.actor!;
-      const legal = state.def.flow.legalMovesFor!(state.state, state.phase, actor);
-      const choice = daifugoBots[2]!.chooseMove(
-        state.def.playerView(state.state, actor),
-        actor,
-        legal,
-        makeRng(step),
-        { thinkMs: () => 0 },
-      )!;
-      const count = state.log.length;
-      peers[actor]!.send(choice.id, choice.payload);
-      await eventually(() => expect(live(host).log.length).toBeGreaterThan(count));
-    }
-    await synced();
-    // A fresh page/session uses the same profile, not a duplicate chair.
-    const beforeReload = live(host).log.map((event) => event.hash);
-    peers[1]!.close();
-    await eventually(() => expect(host.getSnapshot().seats[1]!.connected).toBe(false));
-    const returned = open(1, '-reload');
-    peers[1] = returned;
-    await returned.join(room.code);
-    await eventually(() => expect(returned.getSnapshot().localSeat).toBe(1));
-    await synced();
-    expect(host.getSnapshot().seats.filter((s) => s.profileId === 'daifugo-1')).toHaveLength(1);
-    expect(
-      live(returned)
-        .log.slice(0, beforeReload.length)
-        .map((event) => event.hash),
-    ).toEqual(beforeReload);
-    const beforeMigration = live(host).log.map((event) => event.hash);
-    host.close();
-    const survivors = peers.slice(1);
-    await eventually(
-      () => expect(survivors.filter((p) => p.getSnapshot().isHost)).toHaveLength(1),
-      1500,
-      10,
-    );
-    // One peer electing itself does not mean every survivor has imported its
-    // snapshot yet. Wait for consensus before checking ownership or sending.
-    await eventually(
-      () => {
-        const winner = survivors.find((peer) => peer.getSnapshot().isHost)!;
-        const hostId = winner.getSnapshot().room!.peerId;
-        for (const peer of survivors) {
-          expect(peer.getSnapshot().room!.hostId).toBe(hostId);
-          expect(peer.getSnapshot().connection).toBe('connected');
-        }
-      },
-      1500,
-      10,
-    );
-    await synced(survivors);
-    for (const peer of survivors) {
-      expect(peer.getSnapshot().stage).toBe('table');
-      expect(
-        live(peer)
-          .log.slice(0, beforeMigration.length)
-          .map((event) => event.hash),
-      ).toEqual(beforeMigration);
-    }
-    const elected = survivors.find((p) => p.getSnapshot().isHost)!;
-    const length = live(elected).log.length;
-    // Wait for migration and the reclaimed profile bindings before sending once.
-    await eventually(() => {
-      for (const peer of survivors) {
-        const snapshot = peer.getSnapshot();
-        expect(snapshot.seats[snapshot.localSeat!]?.connected).toBe(true);
+      for (let seat = 1; seat < 4; seat++) {
+        await peers[seat]!.join(room.code);
+        await eventually(() => expect(peers[seat]!.getSnapshot().localSeat).toBe(seat));
       }
-    });
-    const game = live(elected);
-    const actor = game.phase.actor!;
-    if (actor !== 0) {
-      const sender = survivors.find((peer) => peer.getSnapshot().localSeat === actor)!;
-      expect(sender).toBeDefined();
-      const legal = game.def.flow.legalMovesFor!(game.state, game.phase, actor);
-      const choice = daifugoBots[2]!.chooseMove(
-        game.def.playerView(game.state, actor),
-        actor,
-        legal,
-        makeRng(7),
-        { thinkMs: () => 0 },
-      )!;
-      sender.send(choice.id, choice.payload);
-    }
-    await eventually(() => expect(live(elected).log.length).toBeGreaterThan(length), 4000, 10);
-    await synced(survivors);
-  }, 60000);
+      await host.start();
+      await eventually(() =>
+        expect(peers.every((p) => p.getSnapshot().stage === 'table')).toBe(true),
+      );
+      const live = (peer: MultiplayerRoomSession) =>
+        multiplayerSession<DaifugoState, DaifugoRules>(peer.getSnapshot(), 'daifugo')!;
+      const synced = async (group = peers) =>
+        eventually(() => {
+          expect(group.map((p) => p.getSnapshot().error)).toEqual(group.map(() => null));
+          expect(new Set(group.map((p) => stateHash(live(p).state))).size).toBe(1);
+          expect(new Set(group.map((p) => live(p).log.length)).size).toBe(1);
+        });
+      let reachedEffect = false;
+      for (let step = 0; step < (effectKind === 'normal' ? 18 : 500); step++) {
+        await synced();
+        const state = live(host);
+        if (
+          effectKind !== 'normal' &&
+          state.state.pendingPlay?.effects[0]?.kind === effectKind &&
+          state.state.pendingPlay.seat !== 0
+        ) {
+          reachedEffect = true;
+          break;
+        }
+        const actor = state.phase.actor!;
+        const legal = state.def.flow.legalMovesFor!(state.state, state.phase, actor);
+        const choice = daifugoBots[2]!.chooseMove(
+          state.def.playerView(state.state, actor),
+          actor,
+          legal,
+          makeRng(step),
+          { thinkMs: () => 0 },
+        )!;
+        const count = state.log.length;
+        peers[actor]!.send(choice.id, choice.payload);
+        await eventually(() => expect(live(host).log.length).toBeGreaterThan(count));
+      }
+      await synced();
+      if (effectKind !== 'normal') expect(reachedEffect).toBe(true);
+      const reloadSeat = effectKind === 'normal' ? 1 : live(host).state.pendingPlay!.seat;
+      const pendingBeforeReload = live(host).state.pendingPlay;
+      // A fresh page/session uses the same profile, not a duplicate chair.
+      const beforeReload = live(host).log.map((event) => event.hash);
+      peers[reloadSeat]!.close();
+      await eventually(() => expect(host.getSnapshot().seats[reloadSeat]!.connected).toBe(false));
+      const returned = open(reloadSeat, '-reload');
+      peers[reloadSeat] = returned;
+      await returned.join(room.code);
+      await eventually(() => expect(returned.getSnapshot().localSeat).toBe(reloadSeat));
+      await synced();
+      expect(
+        host.getSnapshot().seats.filter((s) => s.profileId === `daifugo-${reloadSeat}`),
+      ).toHaveLength(1);
+      expect(
+        live(returned)
+          .log.slice(0, beforeReload.length)
+          .map((event) => event.hash),
+      ).toEqual(beforeReload);
+      expect(live(returned).state.pendingPlay).toEqual(pendingBeforeReload);
+      const beforeMigration = live(host).log.map((event) => event.hash);
+      host.close();
+      const survivors = peers.slice(1);
+      await eventually(
+        () => expect(survivors.filter((p) => p.getSnapshot().isHost)).toHaveLength(1),
+        1500,
+        10,
+      );
+      // One peer electing itself does not mean every survivor has imported its
+      // snapshot yet. Wait for consensus before checking ownership or sending.
+      await eventually(
+        () => {
+          const winner = survivors.find((peer) => peer.getSnapshot().isHost)!;
+          const hostId = winner.getSnapshot().room!.peerId;
+          for (const peer of survivors) {
+            expect(peer.getSnapshot().room!.hostId).toBe(hostId);
+            expect(peer.getSnapshot().connection).toBe('connected');
+          }
+        },
+        1500,
+        10,
+      );
+      await synced(survivors);
+      for (const peer of survivors) {
+        expect(peer.getSnapshot().stage).toBe('table');
+        expect(
+          live(peer)
+            .log.slice(0, beforeMigration.length)
+            .map((event) => event.hash),
+        ).toEqual(beforeMigration);
+      }
+      const elected = survivors.find((p) => p.getSnapshot().isHost)!;
+      const length = live(elected).log.length;
+      // Wait for migration and the reclaimed profile bindings before sending once.
+      await eventually(() => {
+        for (const peer of survivors) {
+          const snapshot = peer.getSnapshot();
+          expect(snapshot.seats[snapshot.localSeat!]?.connected).toBe(true);
+        }
+      });
+      const game = live(elected);
+      const actor = game.phase.actor!;
+      if (actor !== 0) {
+        const sender = survivors.find((peer) => peer.getSnapshot().localSeat === actor)!;
+        expect(sender).toBeDefined();
+        const legal = game.def.flow.legalMovesFor!(game.state, game.phase, actor);
+        const choice = daifugoBots[2]!.chooseMove(
+          game.def.playerView(game.state, actor),
+          actor,
+          legal,
+          makeRng(7),
+          { thinkMs: () => 0 },
+        )!;
+        sender.send(choice.id, choice.payload);
+      }
+      await eventually(() => expect(live(elected).log.length).toBeGreaterThan(length), 4000, 10);
+      await synced(survivors);
+    },
+    60000,
+  );
 });

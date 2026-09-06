@@ -14,3 +14,6 @@ export {
   orderDaifugoHand,
 } from './deck';
 export { combination, reversed, validateCombination } from './combinations';
+
+export { MAX_PLAY_SIZE } from './deck';
+export { playEffects, forbiddenFinishReason } from './effects';

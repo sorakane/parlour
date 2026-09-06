@@ -3,6 +3,26 @@ import { daifugoConfig } from '@parlour/game-daifugo';
 import { readDaifugoPresets, useDaifugoPresets } from './daifugoPresets';
 
 describe('saved Daifugo rules', () => {
+  it('keeps older presets compatible and round-trips the new local rules', () => {
+    const old = readDaifugoPresets([{ name: '旧卓', rules: { eightCut: true } }])[0]!;
+    expect(old.rules).toMatchObject({
+      stairs: false,
+      sevenGive: false,
+      tenDiscard: false,
+      miyako: false,
+    });
+    const rules = daifugoConfig.resolve({
+      stairs: true,
+      stairsJoker: true,
+      sevenGive: true,
+      tenDiscard: true,
+      strictLock: true,
+      miyako: true,
+      forbidEffectFinish: true,
+    });
+    const restored = readDaifugoPresets(JSON.parse(JSON.stringify([{ name: '新卓', rules }])));
+    expect(restored[0]!.rules).toEqual(rules);
+  });
   it('restores rules through the current schema and ignores malformed storage', () => {
     expect(readDaifugoPresets(null)).toEqual([]);
     expect(readDaifugoPresets([null, { name: 7 }])).toEqual([]);

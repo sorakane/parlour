@@ -1,6 +1,6 @@
 import type { LegalMove } from '@parlour/engine';
 import {
-  MAX_SET_SIZE,
+  MAX_PLAY_SIZE,
   validateCombination,
   MIN_SEATS,
   roleFor,
@@ -10,7 +10,8 @@ import {
 import { getDaifugoMode, type DaifugoModeId } from '@/lib/daifugo/modes';
 import type { DaifugoPlayer, DaifugoSnapshot } from '@/lib/solo/DaifugoTransport';
 
-export type DaifugoDecision = 'lead-or-follow' | 'pass-only' | 'give' | 'return';
+export type DaifugoDecision =
+  'lead-or-follow' | 'pass-only' | 'give' | 'return' | 'effect-give' | 'effect-discard';
 
 export interface DaifugoSeatView extends DaifugoPlayer {
   handCount: number;
@@ -18,12 +19,15 @@ export interface DaifugoSeatView extends DaifugoPlayer {
   isLocal: boolean;
   /** role from the previous deal's finish order — null before any deal completed */
   role: string | null;
+  eliminatedReason: string | null;
 }
 
 export interface PileSetView {
   seat: number;
   cards: readonly string[];
   rank: number;
+  kind: 'set' | 'run';
+  high: number;
   suits: readonly string[];
   jokerOnly: boolean;
 }
@@ -38,6 +42,8 @@ export interface DaifugoTableView {
   targetPoints: number;
   rules: DaifugoState['rules'];
   revolution: boolean;
+  rankLocked: boolean;
+  pendingEffect: { kind: 'give' | 'discard'; count: number; recipientName: string | null } | null;
   jackBack: boolean;
   lockedSuits: readonly string[];
   openingCard: string | null;
@@ -98,6 +104,7 @@ export function daifugoTableView(
     handCount: state.hands[player.seat]?.length ?? 0,
     score: state.score[player.seat] ?? 0,
     isLocal: player.seat === localSeat,
+    eliminatedReason: state.eliminated.find((entry) => entry.seat === player.seat)?.reason ?? null,
     role: order ? (roleFor(order, player.seat) ?? null) : null,
   }));
 
@@ -108,21 +115,23 @@ export function daifugoTableView(
 
   const decision: DaifugoDecision | null = !isLocalTurn
     ? null
-    : hasGive
-      ? 'give'
-      : hasReturn
-        ? 'return'
-        : state.turn === localSeat
-          ? 'lead-or-follow'
-          : null;
+    : state.pendingPlay
+      ? `effect-${state.pendingPlay.effects[0]!.kind}`
+      : hasGive
+        ? 'give'
+        : hasReturn
+          ? 'return'
+          : state.turn === localSeat
+            ? 'lead-or-follow'
+            : null;
 
-  const standingView: PileSetView | null = state.standing
+  const standingView: PileSetView | null = state.standing;
+  const effect = state.pendingPlay?.effects[0];
+  const pendingEffect = effect
     ? {
-        seat: state.standing.seat,
-        cards: state.standing.cards,
-        rank: state.standing.rank,
-        suits: state.standing.suits,
-        jokerOnly: state.standing.jokerOnly,
+        ...effect,
+        recipientName:
+          snapshot.players.find((player) => player.seat === effect.recipient)?.name ?? null,
       }
     : null;
 
@@ -130,8 +139,11 @@ export function daifugoTableView(
   let phaseLabel = `${modeName} · 第${state.deal + 1}ゲーム`;
   if (session.status !== 'playing') phaseLabel = 'マッチ終了';
   else if (decision === 'give' || decision === 'return') phaseLabel = 'カード交換';
+  if (pendingEffect)
+    phaseLabel += ` · ${pendingEffect.kind === 'give' ? '7渡し' : '10捨て'} ${pendingEffect.count}枚${pendingEffect.recipientName ? ` → ${pendingEffect.recipientName}` : ''}`;
   const effects = [
     state.revolution ? '革命' : '',
+    state.rankLocked ? '激縛り' : '',
     state.jackBack ? '11バック' : '',
     state.lockedSuits.length ? `${state.lockedSuits.join('・')}縛り` : '',
   ].filter(Boolean);
@@ -147,6 +159,8 @@ export function daifugoTableView(
     targetPoints: state.rules.targetPoints,
     rules: state.rules,
     revolution: state.revolution,
+    rankLocked: state.rankLocked,
+    pendingEffect,
     jackBack: state.jackBack,
     lockedSuits: state.lockedSuits,
     openingCard: state.openingCard,
@@ -169,7 +183,7 @@ export function daifugoTableView(
 
 /** Client-side check for a hand-picked set before sending it to the engine. */
 export function isValidLocalSet(view: DaifugoTableView, cards: readonly string[]): boolean {
-  if (cards.length < 1 || cards.length > MAX_SET_SIZE) return false;
+  if (cards.length < 1 || cards.length > MAX_PLAY_SIZE) return false;
   const seen = new Set(cards);
   if (seen.size !== cards.length) return false;
   if (!cards.every((card) => view.hand.includes(card))) return false;
@@ -178,4 +192,11 @@ export function isValidLocalSet(view: DaifugoTableView, cards: readonly string[]
 
 export function minDaifugoSeats(): number {
   return MIN_SEATS;
+}
+
+export function daifugoConfirmMove(phase: string): string {
+  if (phase.startsWith('effect-')) return 'resolveEffect';
+  if (phase === 'exchange-give') return 'giveCards';
+  if (phase === 'exchange-return') return 'returnCards';
+  return 'playSet';
 }

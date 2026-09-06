@@ -42,6 +42,7 @@ export function orderOf(card: CardId): number {
 
 export const MIN_SET_SIZE = 1;
 export const MAX_SET_SIZE = 6;
+export const MAX_PLAY_SIZE = 13;
 export const TWO_ORDER = 15;
 
 /**

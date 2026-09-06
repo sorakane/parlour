@@ -15,7 +15,7 @@ export const daifugoCatalog = defineGameCatalog({
   subtitle: 'いつもの仲間と、いつものルールで',
   tagline: 'この卓のルールは、みんなで決める。',
   description:
-    '革命、8切り、11バック、縛り。好きなルールと手番順を選んで、友人と大富豪を楽しみましょう。',
+    '革命、階段、7渡し、10捨て、都落ち。好きなルールと手番順を選んで、友人と大富豪を楽しみましょう。',
   facts: ['4〜8人', 'ローカルルール設定', 'CPU・友人対戦'],
   accent: '#369b88',
   shade: '#18574e',
@@ -26,6 +26,18 @@ export const daifugoCatalog = defineGameCatalog({
   howToPlay: daifugoHowToPlay,
   handOrder: orderDaifugoHand,
   modes: [
+    {
+      id: 'local',
+      preset: 'local',
+      name: 'ローカル卓',
+      tagline: '追加ルールをまとめて試す',
+      description:
+        '階段・階段革命・7渡し・10捨て・都落ち・禁止上がりを追加。激縛りや細かな扱いは設定から選べます。',
+      facts: ['階段・7渡し・10捨て', '都落ち', '禁止上がり'],
+      accent: '#b7835e',
+      shade: '#6f4632',
+      art,
+    },
     {
       id: 'classic',
       preset: 'classic',

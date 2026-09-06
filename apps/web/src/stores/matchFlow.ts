@@ -11,6 +11,7 @@ import type { GinModeId } from '@/lib/gin/modes';
 import type { WildModeId } from '@/lib/wild/modes';
 import type { RatscrewModeId } from '@/lib/ratscrew/modes';
 import type { PresidentModeId } from '@/lib/president/modes';
+import type { DaifugoModeId } from '@/lib/daifugo/modes';
 import type { OhHellModeId } from '@/lib/ohhell/modes';
 import type { PokerModeId } from '@/lib/poker/modes';
 import type { SpadesModeId } from '@/lib/spades/modes';
@@ -46,6 +47,7 @@ export interface MatchSnapshot {
     | HeartsModeId
     | GinModeId
     | PresidentModeId
+    | DaifugoModeId
     | SpadesModeId
     | PokerModeId
     | OhHellModeId
