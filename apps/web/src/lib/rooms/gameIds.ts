@@ -21,6 +21,7 @@ export type MultiplayerGameId =
   | 'hearts'
   | 'gin'
   | 'president'
+  | 'daifugo'
   | 'spades'
   | 'poker'
   | 'ohhell'
@@ -40,6 +41,7 @@ export const MULTIPLAYER_GAME_IDS = [
   'hearts',
   'gin',
   'president',
+  'daifugo',
   'spades',
   'poker',
   'ohhell',

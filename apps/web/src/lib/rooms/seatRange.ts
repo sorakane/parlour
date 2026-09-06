@@ -34,6 +34,7 @@ const SEAT_RANGES: Readonly<Record<MultiplayerGameId, SeatRange>> = {
   euchre: { min: 4, max: 4 },
   hearts: { min: 4, max: 4 },
   president: { min: 4, max: 8 },
+  daifugo: { min: 4, max: 8 },
   spades: { min: 4, max: 4 },
   poker: { min: 2, max: 6 },
   ohhell: { min: 3, max: 7 },

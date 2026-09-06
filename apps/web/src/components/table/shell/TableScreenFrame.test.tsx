@@ -269,7 +269,7 @@ describe('table screen frame convention', () => {
       }
     }
 
-    expect(screens).toHaveLength(23);
+    expect(screens).toHaveLength(24);
     for (const screen of screens) {
       const source = readFileSync(screen, 'utf8');
       expect(source, screen).toContain('<TableScreenFrame');

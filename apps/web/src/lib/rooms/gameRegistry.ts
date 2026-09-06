@@ -1,3 +1,4 @@
+import { daifugoConfig, daifugoGame, type DaifugoRules, type DaifugoState } from '@parlour/game-daifugo';
 /**
  * The one place a game becomes a *room*.
  *
@@ -126,6 +127,7 @@ export type MultiplayerGameSession =
   | GameSession<HeartsState, HeartsRules>
   | GameSession<GinMatchState, GinConfig>
   | GameSession<PresidentState, PresidentRules>
+  | GameSession<DaifugoState, DaifugoRules>
   | GameSession<SpadesState, SpadesRules>
   | GameSession<EightsState, EightsRules>
   | GameSession<PokerState, PokerRules>
@@ -434,6 +436,12 @@ export const ROOM_GAMES: Record<MultiplayerGameId, RoomGamePack> = {
     name: 'President',
     configSchema: presidentConfig,
     createDef: () => presidentGame,
+  }),
+  daifugo: definePack<DaifugoState, DaifugoRules>({
+    id: 'daifugo',
+    name: 'Daifugo',
+    configSchema: daifugoConfig,
+    createDef: () => daifugoGame,
   }),
 
   spades: definePack<SpadesState, SpadesRules>({

@@ -1,4 +1,5 @@
 'use client';
+import { daifugoTablePack } from './tablePacks/daifugo';
 
 import { useSyncExternalStore, type ReactNode } from 'react';
 import { GameTablePage } from '@/components/table/GameTablePage';
@@ -57,6 +58,8 @@ export function RoomGameTable({ gameId }: { gameId: MultiplayerGameId }) {
       return <GameTablePage pack={spiteTablePack} />;
     case 'poker':
       return <GameTablePage pack={pokerTablePack} />;
+    case 'daifugo':
+      return <GameTablePage pack={daifugoTablePack} />;
     case 'president':
       return <GameTablePage pack={presidentTablePack} />;
     case 'ratscrew':

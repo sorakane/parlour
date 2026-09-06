@@ -41,6 +41,7 @@ describe('game shelf catalog', () => {
       'hearts',
       'gin',
       'president',
+      'daifugo',
       'durak',
       'palace',
       'pinochle',

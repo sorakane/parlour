@@ -84,13 +84,10 @@ describe('room game registry', () => {
     }
   });
 
-  it('can run Veil in every room, because every pack supports it', () => {
-    // Veil is on everywhere and mentioned nowhere, so a pack without engine-side
-    // support would be a room that deals a hand it cannot hide and says nothing
-    // about it. There is no refusal to fall back on any more — this is the check
-    // that replaced it.
+  it('retains Veil for every upstream game and explicitly leaves Daifugo open', () => {
     for (const pack of ALL_ROOM_GAMES) {
-      expect(pack.veilSupport()).not.toBeNull();
+      if (pack.id === 'daifugo') expect(pack.veilSupport()).toBeNull();
+      else expect(pack.veilSupport(), pack.id).not.toBeNull();
     }
   });
 

@@ -2629,7 +2629,11 @@ function resolveRoomSettings(settings: RoomSettings): RoomSettings {
     gameId: pack.id,
     seats: settings.seats,
     config: pack.resolveConfig(settings.config),
-    security: settings.security === 'veil' && pack.veilSupport() !== null ? 'veil' : tierFor(),
+    // A default privacy tier cannot manufacture a pack's missing deck ceremony.
+    // Unsupported games use the existing open-room path; supported packs keep
+    // their previous tier selection unchanged.
+    security:
+      pack.veilSupport() === null ? 'open' : settings.security === 'veil' ? 'veil' : tierFor(),
   };
 }
 

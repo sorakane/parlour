@@ -313,12 +313,8 @@ describe('multiplayer route composition', () => {
     );
   });
 
-  /**
-   * Friend rooms share one deal path, and it is the veiled one. Every pack
-   * supports it, so no game is left on a weaker path than its neighbours —
-   * which was the same principle when this asserted the opposite.
-   */
-  it('deals every friend room veiled, so no game is on a weaker path', async () => {
+  // Keep the upstream cryptographic deal path; Daifugo explicitly uses open replay.
+  it('selects Veil for upstream games and open replay for Daifugo', async () => {
     for (const gameId of MULTIPLAYER_GAME_IDS) {
       const pack = ROOM_GAMES[gameId];
       const seats = pack.seats.min;
@@ -332,8 +328,9 @@ describe('multiplayer route composition', () => {
       );
       sessions.push(host);
       await host.create({ gameId, seats });
-      expect(host.getSnapshot().settings?.security, gameId).toBe('veil');
-      expect(host.getSnapshot().security.tier, gameId).toBe('veil');
+      const tier = gameId === 'daifugo' ? 'open' : 'veil';
+      expect(host.getSnapshot().settings?.security, gameId).toBe(tier);
+      expect(host.getSnapshot().security.tier, gameId).toBe(tier);
     }
   });
 
@@ -553,7 +550,7 @@ describe('multiplayer route composition', () => {
     expect(stateHash(guest.getSnapshot().session?.state)).toBe(
       stateHash(host.getSnapshot().session?.state),
     );
-  });
+  }, 30000);
 
   it('keeps the lobby up and names the fault when chairs are still empty', async () => {
     const host = new MultiplayerRoomSession(

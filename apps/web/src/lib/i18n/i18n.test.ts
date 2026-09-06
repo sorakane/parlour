@@ -6,7 +6,6 @@ import { es } from './messages/es';
 import { fr } from './messages/fr';
 import { pt } from './messages/pt';
 import { zh } from './messages/zh';
-import { ALL_ROOM_GAMES } from '@/lib/rooms/gameRegistry';
 
 const CATALOGUES: Readonly<Record<Locale, Messages>> = { en, es, fr, pt, zh };
 const PLACEHOLDER = /\{(\w+)\}/g;
@@ -93,20 +92,13 @@ describe('catalogue completeness', () => {
     expect(blank).toEqual([]);
   });
 
-  /**
-   * Veil runs in every room now, so no game refuses it and nothing explains it
-   * to a player. The concept used to reach the catalogues as a per-game reason
-   * — and Scopa's survived in five languages for months after its pack grew
-   * real support, telling players about a limitation the game no longer had.
-   * A translation nobody can reach is exactly how that happens twice.
-   */
-  it('carries no refusal copy, because no game refuses Veil', () => {
+  // Capability policy is tested in gameRegistry and roomSession.
+  it('carries no obsolete security refusal messages', () => {
     for (const locale of LOCALES) {
       const catalogue = CATALOGUES[locale] as unknown as Record<string, string>;
       const refusals = Object.keys(catalogue).filter((key) => key.startsWith('security.refusal'));
       expect(refusals).toEqual([]);
     }
-    expect(ALL_ROOM_GAMES.every((game) => game.veilSupport() !== null)).toBe(true);
   });
 
   /**

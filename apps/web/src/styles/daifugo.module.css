@@ -1,0 +1,22 @@
+.actions.actions {
+  max-width: calc(100vw - 2rem);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+.actions button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.order {
+  flex-basis: 100%;
+  font-size: 0.75rem;
+  text-align: right;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 4px #000;
+}
+.selection {
+  font-size: 0.85rem;
+  color: #fff2bc;
+  text-shadow: 0 1px 4px #000;
+}

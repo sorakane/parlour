@@ -20,6 +20,7 @@ export const TABLE_WIPE_ROUTES: readonly (readonly [route: string, gameId: strin
   ['/hearts/table', 'hearts'],
   ['/gin/table', 'gin'],
   ['/president/table', 'president'],
+  ['/daifugo/table', 'daifugo'],
   ['/spades/table', 'spades'],
   ['/poker/table', 'poker'],
   ['/ohhell/table', 'ohhell'],

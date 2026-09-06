@@ -23,6 +23,9 @@ import type { GameCopy } from './types';
  * it replaces. A pack edit fails this test until the translation catches up.
  */
 
+// Daifugo is a Japanese-first fork addition; other locales intentionally use the native pack copy.
+const JAPANESE_ONLY = new Set(['daifugo']);
+
 const LOCALES: readonly { id: string; book: Record<string, GameCopy> }[] = [
   { id: 'es', book: ES_GAMES as Record<string, GameCopy> },
   { id: 'fr', book: FR_GAMES as Record<string, GameCopy> },
@@ -171,7 +174,9 @@ function checkGame(locale: string, entry: GameCatalogEntry, copy: GameCopy | und
 
 describe.each(LOCALES)('$id game copy', ({ id, book }) => {
   it('covers every game on the shelf', () => {
-    const missing = GAMES.filter((entry) => !book[entry.id]).map((entry) => entry.id);
+    const missing = GAMES.filter((entry) => !JAPANESE_ONLY.has(entry.id) && !book[entry.id]).map(
+      (entry) => entry.id,
+    );
     expect(missing).toEqual([]);
   });
 
@@ -181,12 +186,13 @@ describe.each(LOCALES)('$id game copy', ({ id, book }) => {
     expect(orphans).toEqual([]);
   });
 
-  it.each(GAMES.map((entry) => [entry.id, entry] as const))(
-    'translates every string %s shows a player',
-    (_id, entry) => {
-      checkGame(id, entry, book[entry.id]);
-    },
-  );
+  it.each(
+    GAMES.filter((entry) => !JAPANESE_ONLY.has(entry.id)).map(
+      (entry) => [entry.id, entry] as const,
+    ),
+  )('translates every string %s shows a player', (_id, entry) => {
+    checkGame(id, entry, book[entry.id]);
+  });
 });
 
 describe('localizeGame', () => {
@@ -239,4 +245,11 @@ describe('localizeGame', () => {
         .find((o) => o.value === 250)?.label,
     );
   });
+});
+
+// The new pack ships Japanese copy even when the surrounding app uses another locale.
+it('preserves all native Daifugo content when an overlay is absent', () => {
+  const game = GAMES.find((entry) => entry.id === 'daifugo')!;
+  expect(game.name).toContain('大富豪');
+  expect(localizeGame(game, undefined)).toEqual(game);
 });

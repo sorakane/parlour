@@ -52,7 +52,8 @@
     "nostr-tools": "^2.10.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "zustand": "^5.0.10"
+    "zustand": "^5.0.10",
+    "@parlour/game-daifugo": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

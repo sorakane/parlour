@@ -1,3 +1,4 @@
+import { daifugoCatalog } from '@parlour/game-daifugo';
 import { modePreset, type GameCatalogEntry, type GameMode, type RuleValues } from '@parlour/engine';
 import { blitzCatalog } from '@parlour/game-blitz';
 import { cribbageCatalog } from '@parlour/game-cribbage';
@@ -61,6 +62,7 @@ export type GameId =
   | 'hearts'
   | 'gin'
   | 'president'
+  | 'daifugo'
   | 'spades'
   | 'poker'
   | 'ohhell'
@@ -96,6 +98,7 @@ const SHELF: readonly GameCatalogEntry[] = [
   shelfEntry(heartsCatalog),
   shelfEntry(ginCatalog),
   shelfEntry(presidentCatalog),
+  shelfEntry(daifugoCatalog),
   shelfEntry(durakCatalog),
   shelfEntry(palaceCatalog),
   shelfEntry(pinochleCatalog),

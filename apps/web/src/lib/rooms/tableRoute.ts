@@ -22,6 +22,7 @@ const TABLE_ROUTES: Record<MultiplayerGameId, string> = {
   hearts: '/hearts/table',
   gin: '/gin/table',
   president: '/president/table',
+  daifugo: '/daifugo/table',
   spades: '/spades/table',
   poker: '/poker/table',
   ohhell: '/ohhell/table',

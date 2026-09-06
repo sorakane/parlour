@@ -115,6 +115,15 @@ const AS_SHIPPED: Record<
     waitsForStorage: true,
     hasBlurb: true,
   },
+  daifugo: {
+    backHref: '/daifugo',
+    backLabel: 'Back to Daifugo',
+    loading: 'Setting the ladder…',
+    botGlyph: '♛',
+    humanGlyph: '◆',
+    waitsForStorage: true,
+    hasBlurb: true,
+  },
   ratscrew: {
     backHref: '/ratscrew',
     backLabel: 'Back to Rat Screw',

@@ -1,3 +1,4 @@
+import { daifugoRulesFor, useDaifugoSetupStore } from '@/stores/daifugoSetup';
 import { applyPreset, type RuleValues } from '@parlour/engine';
 import { euchreConfig } from '@parlour/game-euchre';
 import { ohhellConfig } from '@parlour/game-ohhell';
@@ -238,6 +239,24 @@ export const CREATE_SCREENS: Readonly<Record<MultiplayerGameId, CreateScreen>> =
     room: () => {
       const { mode, seats, overrides } = usePresidentSetupStore.getState();
       return { seats, config: presidentRulesFor(mode, overrides) };
+    },
+    blurb: (capacity) => (
+      <>
+        This {capacity}-seat ladder starts when every chair fills. Share the code with{' '}
+        {capacity - 1} friends — the table seats up to eight.
+      </>
+    ),
+  },
+  daifugo: {
+    backHref: '/daifugo',
+    backLabel: 'Back to Daifugo',
+    loading: 'Setting the ladder…',
+    botGlyph: '♛',
+    humanGlyph: '◆',
+    hydrate: useDaifugoSetupStore,
+    room: () => {
+      const { mode, seats, overrides } = useDaifugoSetupStore.getState();
+      return { seats, config: daifugoRulesFor(mode, overrides) };
     },
     blurb: (capacity) => (
       <>

@@ -29,6 +29,7 @@ export const MENU_VIEW_ROUTES = [
   '/hearts',
   '/gin',
   '/president',
+  '/daifugo',
   '/durak',
   '/palace',
   '/pinochle',
