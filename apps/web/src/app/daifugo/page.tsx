@@ -4,6 +4,7 @@ import { useWipeRouter } from '@/hooks/useWipeRouter';
 import { useState } from 'react';
 import { daifugoConfig } from '@parlour/game-daifugo';
 import { DaifugoPresets } from '@/components/setup/DaifugoPresets';
+import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { RuleSettings } from '@/components/settings/RuleSettings';
 import {
   BotDifficultyPicker,
@@ -61,6 +62,12 @@ export default function DaifugoSetupPage() {
           hint={`あなたとCPU ${seats - 1}人。友人対戦は下の部屋作成から。`}
         />
         <BotDifficultyPicker value={botTier} onChange={setBotTier} />
+        <div className="flex flex-wrap items-center gap-3">
+          <DaifugoMusicToggle />
+          <p className="text-sm text-dusk-200">
+            BGMだけを切り替えます。設定はこのブラウザに保存されます。
+          </p>
+        </div>
       </SetupPanel>
 
       <RuleSettings

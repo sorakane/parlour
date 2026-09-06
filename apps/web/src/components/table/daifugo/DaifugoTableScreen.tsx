@@ -39,6 +39,7 @@ import {
   useTableMenu,
 } from '../shell';
 import { AvatarBadge } from '@/components/AvatarBadge';
+import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import tableStyles from '@/styles/table.module.css';
 import styles from '@/styles/president.module.css';
 import daifugoStyles from '@/styles/daifugo.module.css';
@@ -286,6 +287,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
               選択：{selected.map((card) => DAIFUGO_DECK.faces[card]?.short ?? card).join('・')}
             </span>
           )}
+          <DaifugoMusicToggle />
           {view.decision === 'lead-or-follow' && (
             <>
               <button
