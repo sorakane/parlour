@@ -107,3 +107,33 @@ franchise assets, or fonts were introduced.
 Visual review: 8-portrait lineup at large/32px sizes, 4-seat desktop, 8-seat phone,
 phone results with long names, phone lobby, and reduced-motion mode. Rare states
 use a temporary local route rendering the real components, removed before build.
+
+## Fade-away refinement (2026-09-07)
+
+Scope: refine the eight existing Daifugo portraits, not the game layout. The old
+images had a paper/red diagonal ground, fully drawn black bust and enclosing jaw,
+white shirt, hair/eyes, an initial and peripheral graphic marks. Hair, eyes and
+accessories already carry identity, so the closed coat silhouette is expendable.
+
+- Color: retain the exact ink, paper and red palette. Paint the coat with the same
+  opaque red as the ground, physically joining its shoulder/torso to the field.
+- Typography: keep the initial, slightly smaller so the face stays primary.
+- Composition: keep face coordinates, all eight hair/eye designs, diagonal direction
+  and portrait slots. Open the left cheek into the paper background; retain a short
+  right jaw shadow, individual collars and one pocket fold to imply the unseen coat.
+- Motion: unchanged; fade-away here is a static positive/negative-space relationship,
+  not opacity animation. No mask, blur, translucent erasure or added idle movement.
+
+Removed the full black bust, enclosing face backing, cross-frame slash, corner
+ornament and barcode. Removed the badge's continuous border; the existing seat name,
+turn label and turn-scale cue still identify the active player. No game/rule/profile
+or network state changes. The reference is the historical design principle, not a
+copied artwork or a contemporary illustrator's style.
+
+Reference: Library of Congress, Coles Phillips drawing:
+https://wwws.loc.gov/rr/print/caption/captionphillips.html
+
+Reviewed before/after at 124px with 32/48px reductions, the 8-seat phone table and
+phone results with long names. A temporary local fixture renders actual components
+and is removed before production build. The comparison image is stored outside the
+repository as `outputs/fade-away-comparison.png`.

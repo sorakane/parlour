@@ -395,16 +395,13 @@
 }
 .seatAvatar {
   border-radius: 0 !important;
-  border-color: var(--dg-paper) !important;
+  border: 0 !important;
   box-shadow: none !important;
   animation: none !important;
-  background: #302d2e !important;
+  background: #f7f3e8 !important;
 }
 .seatAvatar > * {
   filter: none;
-}
-.seat[data-active='true'] .seatAvatar {
-  border-color: var(--dg-red) !important;
 }
 .board .seat::before {
   display: none;

@@ -4,10 +4,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 2px solid #f7f3e8;
+  border: 0;
   border-radius: 0;
-  background: #111;
-  box-shadow: 3px 3px 0 #111;
+  background: #f7f3e8;
+  box-shadow: none;
   user-select: none;
   vertical-align: middle;
 }
@@ -19,7 +19,7 @@
 .initial {
   fill: #111;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 25px;
+  font-size: 22px;
   font-weight: 900;
   font-style: italic;
   letter-spacing: -2px;
