@@ -17,6 +17,7 @@ import { useAnyActiveRoom } from '@/lib/table/useRoomTable';
 import { useHistoryStore } from '@/stores/history';
 import { useMatchFlowStore } from '@/stores/matchFlow';
 import { useProfileStore } from '@/stores/profile';
+import visual from '@/styles/daifugoVisual.module.css';
 import styles from './matchEnd.module.css';
 
 export default function MatchEndPage() {
@@ -91,7 +92,10 @@ export default function MatchEndPage() {
   }, [activeRoom, snapshot?.id]);
 
   return (
-    <main className={styles.page} data-testid="match-end-page">
+    <main
+      className={`${styles.page} ${snapshot?.game === 'daifugo' ? `${visual.theme} ${visual.resultPage}` : ''}`}
+      data-testid="match-end-page"
+    >
       {snapshot ? (
         <>
           <MatchPodium snapshot={snapshot}>
@@ -112,11 +116,11 @@ export default function MatchEndPage() {
               className={`btn-fat ${styles.primary}`}
               data-testid="play-again"
             >
-              {t('matchEnd.playAgain')}
+              {snapshot.game === 'daifugo' ? 'もう一度遊ぶ' : t('matchEnd.playAgain')}
               {rematching ? '…' : ''}
             </button>
             <Link href="/" onClick={leaveRoom} className={`btn-fat btn-fat--ghost ${styles.back}`}>
-              {t('common.back')}
+              {snapshot?.game === 'daifugo' ? '戻る' : t('common.back')}
             </Link>
           </div>
           {rematchError ? (

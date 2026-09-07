@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useRef, useState, type CSSProperties } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { orderedHand, type FxEvent } from '@parlour/engine';
 import { type FxCue } from '@/lib/table/fx-motion';
 import {
@@ -16,6 +16,7 @@ import { PRESIDENT_SFX_PACK } from '@/lib/audio/sfx';
 import { useMatchTension } from '@/lib/audio/tension';
 import { DAIFUGO_MATCH_PACE_MS } from '@/lib/daifugo/modes';
 import { isValidLocalSet, type DaifugoTableView } from '@/lib/daifugo/view';
+import { useProfileStore } from '@/stores/profile';
 import { useMusicMood } from '@/stores/audio';
 import { ArrivalProvider, useAdmittedHand } from '@/lib/table/arrival-presentation';
 import { type DealPresentation, useDealPresentation } from '@/lib/table/deal-presentation';
@@ -33,13 +34,14 @@ import {
   TableLoadingScreen,
   TablePlayfield,
   TableScreenFrame,
-  TableTitlePill,
   TableTurnPop,
   useGameTextSurface,
   useTableMenu,
 } from '../shell';
 import { AvatarBadge } from '@/components/AvatarBadge';
 import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
+import { DaifugoPresentation } from './DaifugoPresentation';
+import visual from '@/styles/daifugoVisual.module.css';
 import tableStyles from '@/styles/table.module.css';
 import styles from '@/styles/president.module.css';
 import daifugoStyles from '@/styles/daifugo.module.css';
@@ -67,11 +69,6 @@ export type DaifugoTableScreenProps = {
   onQuit?: () => void;
 };
 
-interface RoleMoment {
-  seat: number;
-  role: string;
-}
-
 export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
   const { view, error } = props;
   const rootRef = useRef<HTMLElement>(null);
@@ -93,8 +90,6 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
     running: Boolean(view) && view?.activeSeat !== null,
   });
   useMusicMood(tense ? 'tense' : null);
-
-  const moments = useRoleMoments(props.fx, props.fxKey);
 
   const requiredCount = view?.decision?.startsWith('effect-')
     ? (view.pendingEffect?.count ?? 0)
@@ -174,13 +169,21 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
     <ArrivalProvider fx={props.fx} fxKey={props.fxKey} localSeat={view.localSeat}>
       <TableScreenFrame
         rootRef={rootRef}
+        className={`${visual.theme} ${visual.board}`}
         dealState={dealStateAttr(deal)}
         menu={menu}
-        hud={<TableTitlePill eyebrow="大富豪 / Daifugo" status={view.phaseLabel} />}
+        hud={
+          <div className={visual.boardHud}>
+            <div className={visual.boardBrand}>
+              大富豪<small>DAIFUGO</small>
+            </div>
+            <p className={visual.boardPhase}>{view.phaseLabel}</p>
+          </div>
+        }
       >
         <TablePlayfield
           label="大富豪のテーブル"
-          feltMark="♛"
+          feltMark="大富豪"
           className={compactRing ? tableStyles.compactRing : undefined}
           seatCount={view.players.length}
         >
@@ -188,6 +191,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             <Seat
               key={player.seat}
               player={player}
+              position={(player.seat - view.localSeat + view.players.length) % view.players.length}
               active={view.activeSeat === player.seat}
               finished={
                 view.finishedOrder.includes(player.seat) || Boolean(player.eliminatedReason)
@@ -209,31 +213,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             rootRef={rootRef}
             renderCue={(cue) => <Cue cue={cue} localSeat={view.localSeat} />}
           />
-          {moments.current && (
-            <div className={styles.celebration} aria-live="polite" data-testid="role-moment">
-              <motion.div
-                initial={{ scale: 0.4, opacity: 0 }}
-                animate={{ scale: [0.4, 1.15, 1], opacity: 1 }}
-                transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-              >
-                <span
-                  className={
-                    moments.current.role === 'scum'
-                      ? styles.celebrationScum
-                      : styles.celebrationCrown
-                  }
-                  aria-hidden="true"
-                >
-                  {moments.current.role === 'scum' ? '🪠' : '👑'}
-                </span>
-                <div className={styles.celebrationLabel}>
-                  {ROLE_LABELS[moments.current.role] ?? moments.current.role}
-                </div>
-              </motion.div>
-            </div>
-          )}
         </TablePlayfield>
 
+        <DaifugoPresentation view={view} fx={props.fx} fxKey={props.fxKey} />
         <TableActionRail className={daifugoStyles.actions}>
           <span className={daifugoStyles.order} aria-live="polite" data-testid="daifugo-order">
             手番順：
@@ -344,27 +326,34 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
 
 function Seat({
   player,
+  position,
   active,
   finished,
   displayCount,
 }: {
   player: DaifugoTableView['players'][number];
+  position: number;
   active: boolean;
   finished: boolean;
   displayCount: number;
 }) {
+  const systemReduced = useReducedMotion();
+  const profileReduced = useProfileStore((state) => state.settings.reducedMotion);
+  const reducedMotion = systemReduced || profileReduced;
   const avatar = getAvatar(player.avatarId);
   const style = { '--seat-accent': avatar.accent, '--seat-shade': avatar.shade } as CSSProperties;
 
   return (
     <motion.div
-      layout
+      layout={!reducedMotion}
       data-seat={player.seat}
-      className={`${tableStyles.seat} ${tableStyles[`seat${player.seat}`] ?? ''} ${
+      data-active={active}
+      data-position={position}
+      className={`${visual.seat} ${tableStyles.seat} ${tableStyles[`seat${position}`] ?? ''} ${
         active ? tableStyles.seatActive : ''
       }`}
       style={style}
-      animate={active ? { scale: [1, 1.06, 1.02] } : { scale: 1 }}
+      animate={active && !reducedMotion ? { scale: [1, 1.06, 1.02] } : { scale: 1 }}
       transition={{ duration: 0.24, ease: [0.34, 1.56, 0.64, 1] }}
     >
       {!player.isLocal && (
@@ -378,11 +367,13 @@ function Seat({
       <AvatarBadge
         avatarId={player.avatarId}
         size="clamp(2.6rem, 5vw, 4.4rem)"
-        className={tableStyles.avatar}
+        className={`${tableStyles.avatar} ${visual.seatAvatar}`}
       />
-      <SeatNameplate name={player.name} isBot={player.isBot} />
+      <div className={visual.seatName}>
+        <SeatNameplate name={player.name} isBot={player.isBot} />
+      </div>
       {player.eliminatedReason && (
-        <span className={styles.scoreChip}>{player.eliminatedReason}</span>
+        <span className={visual.seatInfo}>{player.eliminatedReason}</span>
       )}
       {player.role && ROLE_LABELS[player.role] && (
         <span
@@ -397,10 +388,9 @@ function Seat({
           {player.role === 'daifugo' ? '♛' : ''} {ROLE_LABELS[player.role]}
         </span>
       )}
-      <span className={styles.scoreChip} data-testid={`score-${player.seat}`}>
-        {player.handCount} card{player.handCount === 1 ? '' : 's'} · {player.score} pt
-        {player.score === 1 ? '' : 's'}
-        {finished ? ' · out' : ''}
+      <span className={visual.seatInfo} data-testid={`score-${player.seat}`}>
+        {player.handCount} 枚 · {player.score} pt
+        {finished ? ' · 上がり' : ''}
       </span>
     </motion.div>
   );
@@ -518,37 +508,6 @@ function LocalHand({
       </AnimatePresence>
     </HandRail>
   );
-}
-
-/** Crown-and-sting bursts driven purely by engine role events. */
-function useRoleMoments(fx: readonly FxEvent[], fxKey: string | number) {
-  const moments = useMemo<RoleMoment[]>(
-    () =>
-      fx
-        .filter((event) => event.kind === 'daifugo.role')
-        .map((event) => {
-          const payload = event.payload as { seat?: unknown; role?: unknown };
-          return {
-            seat: typeof payload.seat === 'number' ? payload.seat : -1,
-            role: typeof payload.role === 'string' ? payload.role : '',
-          };
-        })
-        .filter((moment) => moment.role === 'daifugo' || moment.role === 'scum'),
-    [fx],
-  );
-  // The shown moment is derived from the fx batch; only advancing past the
-  // first highlight needs state, and that happens in a timer, not an effect.
-  const [advanced, setAdvanced] = useState<{ key: string | number; value: boolean }>({
-    key: fxKey,
-    value: false,
-  });
-  const index = advanced.key === fxKey && advanced.value ? Math.min(1, moments.length - 1) : 0;
-  useEffect(() => {
-    if (moments.length <= 1) return;
-    const timer = window.setTimeout(() => setAdvanced({ key: fxKey, value: true }), 1100);
-    return () => window.clearTimeout(timer);
-  }, [fxKey, moments.length]);
-  return { current: moments[index] ?? null };
 }
 
 function Cue({ cue, localSeat }: { cue: FxCue; localSeat: number }) {

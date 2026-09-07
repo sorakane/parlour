@@ -7,11 +7,17 @@ import { derivePodium } from '@/lib/match/podium';
 import { getAudioManager } from '@/lib/audio/AudioManager';
 import { PARLOUR_SFX } from '@/lib/audio/sfx';
 import { AvatarBadge } from '@/components/AvatarBadge';
+import { DaifugoResult } from './DaifugoResult';
 import styles from '@/styles/podium.module.css';
 
 const RANK_MEDALS = ['#ffd9a0', '#cfd8dc', '#e2a07c'] as const;
 
-export function MatchPodium({
+export function MatchPodium(props: { snapshot: MatchSnapshot; children?: ReactNode }) {
+  if (props.snapshot.game === 'daifugo') return <DaifugoResult {...props} />;
+  return <StandardMatchPodium {...props} />;
+}
+
+function StandardMatchPodium({
   snapshot,
   children,
 }: {

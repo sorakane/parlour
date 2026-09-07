@@ -6,15 +6,9 @@ import { daifugoConfig } from '@parlour/game-daifugo';
 import { DaifugoPresets } from '@/components/setup/DaifugoPresets';
 import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { RuleSettings } from '@/components/settings/RuleSettings';
-import {
-  BotDifficultyPicker,
-  GameSetupScreen,
-  SeatPicker,
-  SetupPanel,
-  SetupTableActions,
-} from '@/components/setup';
+import { BotDifficultyPicker, SeatPicker, SetupPanel, SetupActions } from '@/components/setup';
+import { DaifugoSetup } from '@/components/setup/DaifugoSetup';
 import { getGame } from '@/lib/games';
-import { useT } from '@/lib/i18n';
 import { useLocalizedGame, useLocalizedModes, useLocalizedSchema } from '@/lib/i18n/gameContent';
 import { DAIFUGO_MODES } from '@/lib/daifugo/modes';
 import { daifugoRulesFor, useDaifugoSetupStore } from '@/stores/daifugoSetup';
@@ -33,7 +27,6 @@ export default function DaifugoSetupPage() {
   const setRule = useDaifugoSetupStore((s) => s.setRule);
   const resetRules = useDaifugoSetupStore((s) => s.resetRules);
   const [starting, setStarting] = useState(false);
-  const t = useT();
   const shelfEntry = useLocalizedGame('daifugo');
   const modes = useLocalizedModes('daifugo', DAIFUGO_MODES);
   const schema = useLocalizedSchema('daifugo', daifugoConfig);
@@ -45,21 +38,39 @@ export default function DaifugoSetupPage() {
   };
 
   return (
-    <GameSetupScreen
-      title={shelfEntry.name}
-      eyebrow="setup.eyebrow.claimCrown"
+    <DaifugoSetup
       help={{ doc: shelfEntry.howToPlay, subtitle: shelfEntry.subtitle }}
       modes={modes}
-      modesLabel="setup.matchFormat"
       selected={mode}
       onSelect={(id) => setMode(id as typeof mode)}
+      actions={
+        <SetupActions
+          busy={starting}
+          actions={[
+            {
+              label: '対戦開始 — CPUと遊ぶ',
+              busyLabel: '対戦を準備中…',
+              onClick: startSolo,
+              testId: 'deal-me-in',
+            },
+            {
+              label: '友人と部屋をつくる',
+              tone: 'teal',
+              onClick: () => router.push('/daifugo/create'),
+              testId: 'create-daifugo-room',
+            },
+            { label: '部屋コードで参加', tone: 'ghost', href: '/join' },
+          ]}
+          note="友人対戦は最大8人。部屋コードを共有して参加できます。"
+        />
+      }
     >
       <SetupPanel>
         <SeatPicker
           options={SEAT_OPTIONS}
           value={seats}
           onChange={setSeats}
-          hint={`あなたとCPU ${seats - 1}人。友人対戦は下の部屋作成から。`}
+          hint={`あなたとCPU ${seats - 1}人。友人対戦は「友人と部屋をつくる」から。`}
         />
         <BotDifficultyPicker value={botTier} onChange={setBotTier} />
         <div className="flex flex-wrap items-center gap-3">
@@ -85,15 +96,6 @@ export default function DaifugoSetupPage() {
           for (const [key, value] of Object.entries(rules)) setRule(key, value);
         }}
       />
-
-      <SetupTableActions
-        busy={starting}
-        soloBusyLabel={t('setup.busy.cuttingDeck')}
-        onSolo={startSolo}
-        createHref="/daifugo/create"
-        createTestId="create-daifugo-room"
-        note={t('setup.note.friendRoomsEight')}
-      />
-    </GameSetupScreen>
+    </DaifugoSetup>
   );
 }

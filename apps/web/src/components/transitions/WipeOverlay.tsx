@@ -6,6 +6,7 @@ import { seededRandom } from '@/components/backgrounds/primitives';
 import { getGame } from '@/lib/games';
 import { normalizePath, tableGameIdFor } from '@/lib/transitions/tableWipe';
 import { useWipeStore } from '@/stores/wipe';
+import visual from '@/styles/daifugoVisual.module.css';
 import s from '@/styles/wipe.module.css';
 
 const SPARK_GLYPHS = ['♠', '♥', '♦', '♣'] as const;
@@ -79,6 +80,23 @@ export function WipeOverlay() {
 
   const gameId = tableGameIdFor(target);
   const game = gameId ? getGame(gameId) : null;
+
+  if (gameId === 'daifugo')
+    return (
+      <div
+        className={`${s.overlay} ${visual.theme} ${visual.wipe}`}
+        data-status={status}
+        data-testid="wipe-overlay"
+        aria-hidden="true"
+      >
+        <div className={visual.wipePanel} />
+        <div className={visual.wipePanel} />
+        <div className={visual.wipeWords}>
+          <small>DAIFUGO / START</small>
+          <strong>対戦開始</strong>
+        </div>
+      </div>
+    );
 
   return (
     <div className={s.overlay} data-status={status} data-testid="wipe-overlay" aria-hidden="true">
