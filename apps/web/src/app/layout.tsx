@@ -27,14 +27,39 @@ const body = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://dai-fugo.vercel.app'),
   title: {
-    default: 'parlour',
-    template: '%s · parlour',
+    default: '大富豪｜友だちと遊べるオンラインカードゲーム',
+    template: '%s · 大富豪',
   },
-  applicationName: 'parlour',
+  applicationName: '大富豪',
   description:
-    'Pull up a chair for beautifully animated card games with friends or offline against bots.',
-  keywords: ['card games', 'multiplayer', 'offline games', 'party games'],
+    '友だちとブラウザで遊べるオンライン大富豪。4〜8人対戦、CPU対戦、革命・8切りなどのローカルルールに対応。',
+  keywords: ['大富豪', 'オンライン', 'トランプ', '友だち', 'ローカルルール'],
+  openGraph: {
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: '大富豪',
+    title: '大富豪｜友だちと遊べるオンラインカードゲーム',
+    description:
+      '友だちとブラウザで遊べるオンライン大富豪。4〜8人対戦、CPU対戦、革命・8切りなどのローカルルールに対応。',
+    images: [
+      {
+        url: '/social/daifugo-v1.png',
+        width: 1200,
+        height: 630,
+        alt: '大富豪 — いつもの仲間と、あなたのルールで。',
+        type: 'image/png',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '大富豪｜友だちと遊べるオンラインカードゲーム',
+    description:
+      '友だちとブラウザで遊べるオンライン大富豪。4〜8人対戦、CPU対戦、革命・8切りなどのローカルルールに対応。',
+    images: ['/social/daifugo-v1.png'],
+  },
   category: 'games',
   manifest: '/manifest.webmanifest',
   icons: {
@@ -45,7 +70,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/icon-192.png', type: 'image/png', sizes: '192x192' }],
     shortcut: '/icon-192.png',
   },
-  appleWebApp: { capable: true, title: 'parlour', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: '大富豪', statusBarStyle: 'black-translucent' },
   formatDetection: { telephone: false },
   other: { 'mobile-web-app-capable': 'yes' },
 };

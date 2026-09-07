@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+  <meta charset="utf-8" /><title>大富豪 共有画像</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      background: #111112;
+      color: #fffaf3;
+      font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    }
+    .stripe {
+      position: absolute;
+      right: -120px;
+      top: 0;
+      width: 480px;
+      height: 630px;
+      background: #be1020;
+      transform: skewX(-15deg);
+    }
+    main {
+      position: relative;
+      padding: 62px 68px;
+    }
+    .eyebrow {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 5px;
+      margin: 0 0 28px;
+    }
+    h1 {
+      font-size: 142px;
+      line-height: 1.15;
+      letter-spacing: 4px;
+      margin: 0 0 28px;
+      font-weight: 900;
+    }
+    h1 span {
+      color: #ed2439;
+    }
+    .tagline {
+      font-size: 34px;
+      font-weight: 800;
+      margin: 0 0 24px;
+    }
+    .detail {
+      font-size: 23px;
+      color: #d8ceca;
+      line-height: 1.7;
+      margin: 0;
+    }
+    footer {
+      position: absolute;
+      left: 68px;
+      bottom: 44px;
+      letter-spacing: 3px;
+      font-size: 19px;
+      font-weight: 700;
+    }
+    .card {
+      position: absolute;
+      width: 210px;
+      height: 296px;
+      right: 105px;
+      top: 140px;
+      background: #fffaf3;
+      color: #111112;
+      border: 4px solid #111112;
+      transform: rotate(13deg);
+      box-shadow: 12px 14px 0 #111112;
+    }
+    .back {
+      right: 150px;
+      top: 119px;
+      background: #111112;
+      border: 3px solid #fffaf3;
+      transform: rotate(-12deg);
+      color: #fffaf3;
+      display: grid;
+      place-items: center;
+      font-size: 108px;
+      font-weight: 900;
+    }
+    .corner {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      font-size: 36px;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+    .suit {
+      position: absolute;
+      inset: 65px 0;
+      text-align: center;
+      font-size: 130px;
+      line-height: 1;
+    }
+    .bottom {
+      top: auto;
+      left: auto;
+      bottom: 14px;
+      right: 16px;
+      transform: rotate(180deg);
+    }
+  </style>
+  <body>
+    <div class="stripe"></div>
+    <main>
+      <p class="eyebrow">DAIFUGO / ONLINE CARD GAME</p>
+      <h1>大<span>富</span>豪.</h1>
+      <p class="tagline">いつもの仲間と、あなたのルールで。</p>
+      <p class="detail">友だちと4〜8人対戦・CPU対戦<br />革命 / 8切り / ローカルルール</p>
+    </main>
+    <div class="card back">D</div>
+    <div class="card">
+      <span class="corner">A<br />♠</span><span class="suit">♠</span
+      ><span class="corner bottom">A<br />♠</span>
+    </div>
+    <footer>DAI-FUGO.VERCEL.APP</footer>
+  </body>
+</html>
