@@ -91,7 +91,7 @@ export function DaifugoSetup({
       </div>
       <footer className={s.setupFooter}>
         <span>大富豪 / DAIFUGO</span>
-        <span>YOUR TABLE. YOUR RULES.</span>
+        <a href="/credits/">クレジット・ライセンス</a>
       </footer>
     </main>
   );

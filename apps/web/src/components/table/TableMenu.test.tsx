@@ -224,9 +224,9 @@ describe('TableMenu', () => {
 
     act(() => toggle.click());
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
-    expect(JSON.parse(localStorage.getItem(MUSIC_STORAGE_KEY)!).trackId).toBe('campfire-1');
+    expect(JSON.parse(localStorage.getItem(MUSIC_STORAGE_KEY)!).trackId).toBe('hearth');
     expect(container.querySelector('[data-testid="music-track-title"]')?.textContent).toContain(
-      'Ember Watch',
+      '合成環境音',
     );
   });
 

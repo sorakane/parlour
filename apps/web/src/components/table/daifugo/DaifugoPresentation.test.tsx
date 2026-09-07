@@ -83,6 +83,51 @@ describe('Daifugo presentation follows confirmed state', () => {
       '7渡し',
     );
   });
+  it('keeps a revolution readable across routine bot updates without restarting its timer', () => {
+    const before = view();
+    const after = { ...before, revolution: true };
+    const render = (v: typeof before, fx: FxEvent[], key: number) =>
+      act(() => root.render(createElement(DaifugoPresentation, { view: v, fx, fxKey: key })));
+    render(before, [], 0);
+    render(after, play, 1);
+    act(() => vi.advanceTimersByTime(600));
+    render({ ...after, activeSeat: 1 }, [], 2);
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
+      '革命',
+    );
+    render(after, [{ kind: 'daifugo.pile-clear', payload: { reason: 'all-pass', seat: 1 } }], 3);
+    act(() => vi.advanceTimersByTime(1200));
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')).not.toBeNull();
+    act(() => vi.advanceTimersByTime(150));
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')).toBeNull();
+  });
+  it('explains cancellation and keeps a revolution visible when the same move finishes a player', () => {
+    const before = view();
+    const after = { ...before, revolution: true, jackBack: true };
+    const notice = daifugoNotice(before, after, [
+      ...play,
+      { kind: 'daifugo.out', payload: { seat: 0, place: 1 } },
+    ]);
+    expect(notice).toMatchObject({ title: '革命', impact: 'major', actor: 'あなた' });
+    expect(notice?.detail).toContain('重なって通常順');
+    expect(notice?.extra).toContain('11バック');
+    expect(daifugoNotice(after, { ...after, revolution: false }, play)?.title).toBe('革命返し');
+  });
+  it('treats an ordinary all-pass sweep as history and never starts a reconnect animation', () => {
+    const v = view();
+    act(() =>
+      root.render(
+        createElement(DaifugoPresentation, {
+          view: v,
+          fx: [{ kind: 'daifugo.pile-clear', payload: { reason: 'all-pass' } }],
+          fxKey: 1,
+        }),
+      ),
+    );
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')).toBeNull();
+    expect(container.textContent).toContain('直前：場が流れた');
+    expect(daifugoNotice(null, { ...v, revolution: true }, [])).toBeNull();
+  });
   it('cancels pending presentation timers on unmount', () => {
     act(() =>
       root.render(

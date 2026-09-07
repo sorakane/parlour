@@ -1,3 +1,4 @@
+vi.mock('@/lib/audio/music', () => import('@/lib/audio/music-catalog.fixture'));
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { MUSIC_STORAGE_KEY, MusicController } from './MusicController';
 import {

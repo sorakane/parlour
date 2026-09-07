@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SAMPLE_RATE = 44_100;
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'audio');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'audio', 'original');
 const TAU = Math.PI * 2;
 
 function tone(samples, frequency, amplitude) {
@@ -68,4 +68,4 @@ for (let i = 0; i < fade; i += 1) {
 
 normalize(samples, 0.38);
 mkdirSync(ROOT, { recursive: true });
-writeFileSync(join(ROOT, 'parlour-ambience.wav'), wav(samples));
+writeFileSync(join(ROOT, 'ambience.wav'), wav(samples));

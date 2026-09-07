@@ -1,0 +1,40 @@
+{
+  "description": "Math-only audio. No model, recording, voice, or third-party samples.",
+  "files": {
+    "audio/original/ambience.wav": {
+      "sha256": "790b9bc490c96de399ded3870af5bb71985c5d3921e721dac2e456c9dbafaa5e",
+      "source": "scripts/generate-ambience.mjs (upstream MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/chime.wav": {
+      "sha256": "d4145d9cbca4c771d2e67bf227afd24031d453d24b46c1c89d2d5d61d245a544",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/click.wav": {
+      "sha256": "56c56ef79a1af79443316c324cf095946ff22a4491ef0752cba279bb5e72e1ef",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/join.wav": {
+      "sha256": "4f6e260cf838b4b4a1dae006c1ced17ddd62f390cd52556df78509d177ac55ca",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/leave.wav": {
+      "sha256": "050af999d9eb413e9b048c51931de3eb957b8c133e02e7218a0d901bf51dd288",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/low.wav": {
+      "sha256": "cc09500776c43fd89fd5bea3dc69fe0812f433becb13afade4ceff52d5622d9a",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    },
+    "audio/original/silent.wav": {
+      "sha256": "4a3cbcc52398f593d59cbaf2c1b89415a7eaf79f31af22997a7a3b2180aa4cfc",
+      "source": "scripts/generate-original-sfx.mjs (this fork, MIT)",
+      "recordedSamples": false
+    }
+  }
+}

@@ -1,3 +1,4 @@
+// Test-only synthetic metadata. No audio recordings are included.
 import { DEFAULT_SCENE, type SceneId } from '@/stores/scene';
 
 /**
@@ -51,19 +52,57 @@ export type MusicTrack = {
   loop?: boolean;
 };
 
-// Recorded upstream music was removed: generation/subscription provenance was unavailable.
-const CAMPFIRE_PLAYLIST: readonly MusicTrack[] = [];
-const CASINO_PLAYLIST: readonly MusicTrack[] = [];
-const SNUG_PLAYLIST: readonly MusicTrack[] = [];
-export const BEACH_PLAYLIST: readonly MusicTrack[] = [];
-export const MENU_PLAYLIST: readonly MusicTrack[] = [];
+function track(id: string, title: string, src: string, volume?: number): MusicTrack {
+  return { id, title, src, format: 'm4a', ...(volume === undefined ? {} : { volume }) };
+}
+
+const CAMPFIRE_PLAYLIST: readonly MusicTrack[] = [
+  track('campfire-1', 'Ember Watch', '/audio/music/music-campfire-1.m4a'),
+  track('campfire-2', 'Crickets & Coals', '/audio/music/music-campfire-2.m4a', 0.95),
+  track('campfire-3', 'Smoke Signals', '/audio/music/music-campfire-3.m4a'),
+];
+
+const CASINO_PLAYLIST: readonly MusicTrack[] = [
+  track('casino-1', 'Velvet Hour', '/audio/music/music-casino-1.m4a'),
+  track('casino-2', 'Midnight Chip Lead', '/audio/music/music-casino-2.m4a', 0.95),
+  track('casino-3', 'House Whiskey', '/audio/music/music-casino-3.m4a'),
+];
+
+const SNUG_PLAYLIST: readonly MusicTrack[] = [
+  track('snug-1', 'Turf & Timber', '/audio/music/music-snug-1.m4a'),
+  track('snug-2', 'Last Bus Home', '/audio/music/music-snug-2.m4a', 0.95),
+  track('snug-3', 'The Quiet Round', '/audio/music/music-snug-3.m4a'),
+];
+
+/** Tropical house for the sunset beach — also borrowed wholesale by Wild's pack. */
+export const BEACH_PLAYLIST: readonly MusicTrack[] = [
+  track('beach-1', 'Palm Court Shuffle', '/audio/music/music-beach-1.m4a'),
+  track('beach-2', 'Cabana Stack', '/audio/music/music-beach-2.m4a', 0.95),
+  track('beach-3', 'Reverse Into Sunset', '/audio/music/music-beach-3.m4a'),
+];
+
+/** Title-screen theme, played on menu routes instead of a scene playlist. */
+export const MENU_PLAYLIST: readonly MusicTrack[] = [
+  track('title-1', 'Pull Up a Chair', '/audio/music/music-title.m4a'),
+];
+
+/** Background-native `tense` cues — armed by game state, never shown in settings. */
 export const TENSE_PLAYLISTS: Readonly<Record<SceneId, readonly MusicTrack[]>> = {
-  campfire: [],
-  casino: [],
-  snug: [],
-  beach: [],
+  campfire: [track('tense-campfire', 'Ember Rush', '/audio/music/music-tense-campfire.m4a')],
+  casino: [track('tense-casino', 'House Edge', '/audio/music/music-tense-casino.m4a')],
+  snug: [track('tense-snug', 'Last Orders', '/audio/music/music-tense-snug.m4a')],
+  beach: [track('tense-beach', 'Last Card Tide', '/audio/music/music-tense-beach.m4a')],
 };
-export const MUSIC_TRACKS: readonly MusicTrack[] = [];
+
+/** Flat view of every shipped track — handy for validation and tooling. */
+export const MUSIC_TRACKS: readonly MusicTrack[] = [
+  ...CAMPFIRE_PLAYLIST,
+  ...CASINO_PLAYLIST,
+  ...SNUG_PLAYLIST,
+  ...BEACH_PLAYLIST,
+  ...MENU_PLAYLIST,
+  ...Object.values(TENSE_PLAYLISTS).flat(),
+];
 
 export const BASE_PACK_ID = 'parlour';
 
@@ -86,11 +125,11 @@ export const PARLOUR_PACK: MusicPack = {
   },
 };
 
-/** Procedural ambience, reproducible from generate-ambience.mjs (MIT). No recorded samples. */
+/** Plays when a playlist has no working songs (e.g. before Suno files land). */
 export const FALLBACK_TRACK: MusicTrack = {
   id: 'hearth',
-  title: '合成環境音',
-  src: '/audio/original/ambience.wav',
+  title: 'Hearth Ambience',
+  src: '/audio/parlour-ambience.wav',
   volume: 0.6,
   loop: true,
 };

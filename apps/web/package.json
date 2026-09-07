@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-public-audio.mjs && next build",
     "postbuild": "node scripts/generate-pwa.mjs",
     "start": "next start",
     "type-check": "tsc --noEmit",
     "test": "vitest run --project web && vitest run --project duel",
-    "generate:audio": "pnpm run generate:ambience && pnpm run generate:sfx && pnpm run generate:voice && pnpm run generate:music",
+    "generate:audio": "node scripts/generate-ambience.mjs && node scripts/generate-original-sfx.mjs",
     "generate:ambience": "node scripts/generate-ambience.mjs",
     "generate:sfx": "node --env-file=../../.env.local scripts/generate-sfx.mjs",
     "generate:voice": "node --env-file=../../.env.local scripts/generate-voice.mjs",
@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "test:perf": "playwright test --config playwright.perf.config.ts",
     "test:e2e:install": "playwright install --with-deps chromium webkit",
-    "serve:export": "node scripts/serve-export.mjs out 4321"
+    "serve:export": "node scripts/serve-export.mjs out 4321",
+    "prebuild": "node scripts/check-public-audio.mjs"
   },
   "dependencies": {
     "@parlour/engine": "workspace:*",

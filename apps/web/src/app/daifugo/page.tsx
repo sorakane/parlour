@@ -76,7 +76,7 @@ export default function DaifugoSetupPage() {
         <div className="flex flex-wrap items-center gap-3">
           <DaifugoMusicToggle />
           <p className="text-sm text-dusk-200">
-            BGMだけを切り替えます。設定はこのブラウザに保存されます。
+            合成環境音だけを切り替えます。設定はこのブラウザに保存されます。
           </p>
         </div>
       </SetupPanel>

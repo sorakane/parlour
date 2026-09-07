@@ -1374,3 +1374,154 @@
     display: none;
   }
 }
+
+/* Decisive effects: original geometric cut-in, independent from turn batches. */
+.board .cutInLane {
+  top: 28%;
+  width: min(46rem, 78vw);
+}
+.board .cutIn {
+  isolation: isolate;
+  overflow: hidden;
+  padding: 0.85rem 1.6rem 1rem;
+  border-left-width: 10px;
+  animation: decisiveCutIn var(--cut-in-duration) var(--dg-ease) both;
+}
+.board .cutIn strong {
+  position: relative;
+  font-size: clamp(2rem, 5.8vw, 4.5rem);
+  line-height: 1.15;
+  margin-block: 0.3rem;
+}
+.board .cutIn p {
+  position: relative;
+  font-weight: 800;
+}
+.cutInEcho {
+  position: absolute;
+  z-index: -1;
+  right: -0.1em;
+  top: -0.2em;
+  font-size: clamp(5rem, 13vw, 10rem);
+  font-weight: 1000;
+  line-height: 1.2;
+  color: transparent;
+  -webkit-text-stroke: 1px #fff5;
+  transform: translateX(0.15em);
+}
+.cutInSlash {
+  position: absolute;
+  inset: -0.8rem -4rem;
+  background: var(--dg-paper);
+  transform: rotate(-5deg) skewX(-18deg);
+  animation: cutInSlash var(--cut-in-duration) var(--dg-ease) both;
+}
+.cutInExtra {
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 0.35rem;
+}
+.board .cutInLane[data-impact='major'] .cutIn {
+  border-left-width: 14px;
+  box-shadow:
+    10px 10px 0 var(--dg-ink),
+    14px 14px 0 var(--dg-paper);
+}
+.board .cutInLane[data-impact='major'] strong {
+  font-size: clamp(3.5rem, 8vw, 6rem);
+}
+@keyframes decisiveCutIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-65%) rotate(-5deg);
+  }
+  13% {
+    opacity: 1;
+    transform: translateX(1.5%) rotate(-5deg);
+  }
+  22%,
+  84% {
+    opacity: 1;
+    transform: translateX(0) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(35%) rotate(-5deg);
+  }
+}
+@keyframes cutInSlash {
+  0% {
+    opacity: 0;
+    transform: translateX(75%) rotate(-5deg) skewX(-18deg) scaleX(0.5);
+  }
+  12%,
+  83% {
+    opacity: 1;
+    transform: translateX(0) rotate(-5deg) skewX(-18deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-35%) rotate(-5deg) skewX(-18deg) scaleX(1);
+  }
+}
+@media (orientation: portrait) {
+  .board.board .cutInLane {
+    top: 24%;
+    width: calc(100vw - 2.5rem);
+  }
+  .board .cutIn {
+    padding: 0.65rem 0.9rem 0.85rem;
+  }
+  .board .cutIn small {
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+  }
+  .board .cutIn p {
+    font-size: 0.72rem;
+  }
+  .cutInSlash {
+    inset-inline: -0.6rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .board.board .cutInLane {
+    top: 30%;
+    left: 62%;
+    width: 62vw;
+  }
+  .board .cutIn {
+    padding: 0.4rem 0.9rem 0.6rem;
+  }
+  .board .cutInLane[data-impact='major'] strong {
+    font-size: 2.6rem;
+  }
+  .board .cutIn strong {
+    font-size: 2rem;
+  }
+  .board .cutIn small,
+  .board .cutIn p,
+  .cutInExtra {
+    font-size: 0.65rem;
+  }
+  .cutInSlash {
+    inset: -0.3rem -0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .board .cutIn,
+  .cutInSlash {
+    animation: none !important;
+    transform: none;
+  }
+  .cutInEcho {
+    display: none;
+  }
+}
+:global(html.reduce-motion) .board .cutIn,
+:global(html.reduce-motion) .cutInSlash {
+  animation: none !important;
+  transform: none;
+}
+:global(html.reduce-motion) .cutInEcho {
+  display: none;
+}

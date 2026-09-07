@@ -135,33 +135,39 @@ describe('AudioDirector', () => {
     vi.unstubAllGlobals();
   });
 
-  it('starts the title theme on the first gesture, not a later effect', async () => {
+  it('starts the procedural ambience on the first gesture, not a later effect', async () => {
     await act(async () => root.render(createElement(AudioDirector)));
-    expect(FakeHowl.instances.some((howl) => howl.src.includes('music-title'))).toBe(false);
+    expect(
+      FakeHowl.instances.some((howl) => howl.src.includes('/audio/original/ambience.wav')),
+    ).toBe(false);
 
     act(() => window.dispatchEvent(new Event('pointerdown')));
 
-    const theme = FakeHowl.instances.find((howl) => howl.src.includes('music-title.m4a'));
+    const theme = FakeHowl.instances.find((howl) =>
+      howl.src.includes('/audio/original/ambience.wav'),
+    );
     expect(theme).toBeDefined();
     expect(theme?.playing()).toBe(true);
   });
 
-  it('keeps the title theme playing when the shelf route replaces home', async () => {
+  it('keeps the procedural ambience playing when the shelf route replaces home', async () => {
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
-    const theme = FakeHowl.instances.find((howl) => howl.src.includes('music-title.m4a'));
+    const theme = FakeHowl.instances.find((howl) =>
+      howl.src.includes('/audio/original/ambience.wav'),
+    );
     expect(theme?.playing()).toBe(true);
 
     nav.pathname = '/games';
     await act(async () => root.render(createElement(AudioDirector)));
 
     expect(theme?.playing()).toBe(true);
-    expect(FakeHowl.instances.filter((howl) => howl.src.includes('music-title.m4a'))).toHaveLength(
-      1,
-    );
+    expect(
+      FakeHowl.instances.filter((howl) => howl.src.includes('/audio/original/ambience.wav')),
+    ).toHaveLength(1);
   });
 
-  it('silences the title theme while hidden and resumes it on foreground', async () => {
+  it('silences the procedural ambience while hidden and resumes it on foreground', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (Linux; Android 15; Pixel 9)',
       platform: 'Linux armv8l',
@@ -171,7 +177,9 @@ describe('AudioDirector', () => {
     resetMusicBindingsForTests();
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
-    const theme = FakeHowl.instances.find((howl) => howl.src.includes('music-title.m4a'));
+    const theme = FakeHowl.instances.find((howl) =>
+      howl.src.includes('/audio/original/ambience.wav'),
+    );
     expect(theme?.playing()).toBe(true);
 
     Object.defineProperty(document, 'visibilityState', {
@@ -192,7 +200,7 @@ describe('AudioDirector', () => {
     expect(theme?.playing()).toBe(true);
   });
 
-  it('keeps the title theme playing when a fullscreen Mac app loses visibility', async () => {
+  it('keeps the procedural ambience playing when a fullscreen Mac app loses visibility', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128',
       platform: 'MacIntel',
@@ -202,7 +210,9 @@ describe('AudioDirector', () => {
     resetMusicBindingsForTests();
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
-    const theme = FakeHowl.instances.find((howl) => howl.src.includes('music-title.m4a'));
+    const theme = FakeHowl.instances.find((howl) =>
+      howl.src.includes('/audio/original/ambience.wav'),
+    );
     expect(theme?.playing()).toBe(true);
 
     Object.defineProperty(document, 'visibilityState', {
@@ -222,23 +232,15 @@ describe('AudioDirector', () => {
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
 
-    expect(FakeHowl.instances.some((howl) => howl.src.includes('president-role-chime'))).toBe(
-      false,
-    );
+    expect(FakeHowl.instances.some((howl) => howl.src.includes('join.wav'))).toBe(false);
     act(() => harness.seats([host, bot]));
-    expect(FakeHowl.instances.some((howl) => howl.src.includes('president-role-chime'))).toBe(
-      false,
-    );
+    expect(FakeHowl.instances.some((howl) => howl.src.includes('join.wav'))).toBe(false);
 
     act(() => harness.seats([host, guest]));
-    expect(
-      FakeHowl.instances.find((howl) => howl.src.includes('president-role-chime'))?.playing(),
-    ).toBe(true);
+    expect(FakeHowl.instances.find((howl) => howl.src.includes('join.wav'))?.playing()).toBe(true);
 
     act(() => harness.seats([host]));
-    expect(
-      FakeHowl.instances.find((howl) => howl.src.includes('president-pass.mp3'))?.playing(),
-    ).toBe(true);
+    expect(FakeHowl.instances.find((howl) => howl.src.includes('leave.wav'))?.playing()).toBe(true);
   });
 
   /*
@@ -259,7 +261,7 @@ describe('AudioDirector', () => {
     }
 
     const pressed = () =>
-      FakeHowl.instances.some((howl) => howl.src.includes('ui-press.mp3') && howl.playing());
+      FakeHowl.instances.some((howl) => howl.src.includes('click.wav') && howl.playing());
 
     let tile: HTMLButtonElement;
 

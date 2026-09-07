@@ -72,3 +72,18 @@ immediate reconstructed-state rendering and lock removal, and cover spade-three.
 Browser fixtures use the actual table component at 1280×800, 390×844, 390×667 and
 844×390 with 8 seats and commit controls. The temporary fixture route is removed
 before production build; its source is saved outside the repository in work/.
+
+## Decisive cut-ins (2026-09-07)
+
+Color: solid red/black/paper, no flashes. Typography: a dominant rule word and quiet
+actor/consequence line, with a decorative outlined echo. Composition: opposing angled
+bands above the pile; the current-rule panel and action rail remain available. Motion:
+1900 ms for revolution/return, 1300 ms for smaller special actions, with a readable hold
+and explicit exit. Ordinary turn updates do not remove or restart the active cue.
+Only newer decisive cues or outcomes replace a major cue; no queue or game-clock delay.
+Reduced motion uses the same timed static band. Simultaneous revolution and 11-back
+explain the resulting normal order; finishing a player cannot hide a simultaneous
+revolution. Ordinary all-pass sweeps update history without a dramatic cut-in.
+
+The same guidance is installed in `japanese-game-ui/SKILL.md`. See `ASSET-AUDIT.md`
+for the separate audio provenance/removal and attribution work.

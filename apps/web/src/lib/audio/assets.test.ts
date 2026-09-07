@@ -179,7 +179,7 @@ const REQUIRED_SOUNDS = [
 ] as const;
 
 describe('production audio suite', () => {
-  it('ships every required sound as a valid non-empty MP3', () => {
+  it('ships every required sound as a locally synthesized WAV', () => {
     const byId = new Map(SOUND_MANIFEST.map((sound) => [sound.id, sound]));
 
     for (const id of REQUIRED_SOUNDS) {
@@ -187,10 +187,10 @@ describe('production audio suite', () => {
       expect(sound, `${id} is declared`).toBeDefined();
       const path = join(process.cwd(), 'public', sound!.src);
       expect(statSync(path).size, `${id} is not an empty placeholder`).toBeGreaterThan(1_000);
-      const header = readFileSync(path).subarray(0, 3);
-      const hasId3 = header.toString() === 'ID3';
-      const hasFrameSync = header[0] === 0xff && (header[1]! & 0xe0) === 0xe0;
-      expect(hasId3 || hasFrameSync, `${id} is not MPEG audio`).toBe(true);
+      const header = readFileSync(path).subarray(0, 12);
+      expect(header.subarray(0, 4).toString()).toBe('RIFF');
+      expect(header.subarray(8, 12).toString()).toBe('WAVE');
+      expect(sound!.src).toMatch(/^\/audio\/original\/[^/]+\.wav$/);
     }
 
     expect(SOUND_MANIFEST.map((sound) => sound.id)).toEqual(REQUIRED_SOUNDS);

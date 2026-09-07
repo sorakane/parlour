@@ -1,11 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { reversed } from '@parlour/game-daifugo';
+import { nextLockedCards } from './DaifugoRuleStatus';
 import type { FxEvent } from '@parlour/engine';
 import type { DaifugoTableView } from '@/lib/daifugo/view';
 import s from '@/styles/daifugoVisual.module.css';
 
-export type DaifugoNotice = { title: string; detail: string; tone: 'action' | 'rank' };
+export type DaifugoNotice = {
+  title: string;
+  detail: string;
+  tone: 'action' | 'rank';
+  impact?: 'major' | 'minor' | 'history';
+  actor?: string;
+  extra?: string;
+};
+export const cutInDuration = (notice: DaifugoNotice) => (notice.impact === 'major' ? 1900 : 1300);
 const ROLES: Record<string, string> = {
   daifugo: '大富豪',
   vice: '富豪',
@@ -30,29 +40,6 @@ export function daifugoNotice(
     fx.find((event) => event.kind === kind)?.payload as Record<string, unknown> | undefined;
   if (view.phaseLabel === 'マッチ終了')
     return { title: '決着', detail: '最終結果へ', tone: 'rank' };
-  const localRole = fx.find(
-    (event) =>
-      event.kind === 'daifugo.role' && (event.payload as { seat?: number }).seat === view.localSeat,
-  )?.payload as { role: string } | undefined;
-  if (localRole)
-    return {
-      title: ROLES[localRole.role] ?? '順位確定',
-      detail: 'このゲームのあなたの階級',
-      tone: 'rank',
-    };
-  const eliminated = payload('daifugo.eliminated');
-  if (eliminated)
-    return { title: '順位確定', detail: String(eliminated.reason ?? '反則上がり'), tone: 'rank' };
-  const out = payload('daifugo.out');
-  if (out) {
-    const who =
-      out.seat === view.localSeat
-        ? 'あなた'
-        : (view.players.find((p) => p.seat === out.seat)?.name ?? 'プレイヤー');
-    return { title: `${out.place}位で上がり`, detail: who, tone: 'rank' };
-  }
-  if (previous && previous.dealNumber !== view.dealNumber)
-    return { title: `第${view.dealNumber}ゲーム`, detail: '新しい一局が始まる', tone: 'rank' };
   const labels: string[] = [];
   if (previous && fx.some((event) => event.kind === 'daifugo.set')) {
     if (previous.revolution !== view.revolution) labels.push(view.revolution ? '革命' : '革命返し');
@@ -79,13 +66,67 @@ export function daifugoNotice(
   const cleared = payload('daifugo.pile-clear');
   if (cleared && typeof cleared.reason === 'string' && CLEARS[cleared.reason])
     labels.push(CLEARS[cleared.reason]!);
+  const set = payload('daifugo.set');
+  const actorSeat = set?.seat ?? cleared?.seat ?? effect?.seat;
+  const actor =
+    actorSeat === view.localSeat ? 'あなた' : view.players.find((p) => p.seat === actorSeat)?.name;
+  const revolution = labels.includes('革命') || labels.includes('革命返し');
+  const back = labels.includes('11バック') || labels.includes('11バック解除');
+  const lock = labels.includes('激縛り') || labels.includes('縛り');
+  if (revolution || back || lock || labels.includes('8切り') || labels.includes('スペ3返し')) {
+    const suits = view.lockedSuits
+      .map((x) => (({ S: '♠', H: '♥', D: '♦', C: '♣' }) as Record<string, string>)[x] ?? x)
+      .join(' ');
+    const order = reversed(view) ? '強さが逆転 — 2より3が強い' : '通常順へ — 3より2が強い';
+    return {
+      title: labels[0]!,
+      extra: labels.slice(1).join(' / '),
+      actor,
+      detail:
+        revolution || back
+          ? view.revolution && view.jackBack
+            ? '革命 × 11バック — 重なって通常順'
+            : order
+          : lock
+            ? `${suits} 縛り${nextLockedCards(view) ? ` — 次は${nextLockedCards(view)}` : ' — 同じマークで返す'}`
+            : '場を流して、新しい攻防へ',
+      tone: 'action',
+      impact: revolution ? 'major' : 'minor',
+    };
+  }
+  const localRole = fx.find(
+    (event) =>
+      event.kind === 'daifugo.role' && (event.payload as { seat?: number }).seat === view.localSeat,
+  )?.payload as { role: string } | undefined;
+  if (localRole)
+    return {
+      title: ROLES[localRole.role] ?? '順位確定',
+      detail: 'このゲームのあなたの階級',
+      tone: 'rank',
+    };
+  const eliminated = payload('daifugo.eliminated');
+  if (eliminated)
+    return { title: '順位確定', detail: String(eliminated.reason ?? '反則上がり'), tone: 'rank' };
+  const out = payload('daifugo.out');
+  if (out) {
+    const who =
+      out.seat === view.localSeat
+        ? 'あなた'
+        : (view.players.find((p) => p.seat === out.seat)?.name ?? 'プレイヤー');
+    return { title: `${out.place}位で上がり`, detail: who, tone: 'rank' };
+  }
+  if (previous && previous.dealNumber !== view.dealNumber)
+    return { title: `第${view.dealNumber}ゲーム`, detail: '新しい一局が始まる', tone: 'rank' };
   if (!labels.length) return null;
-  const detail = view.pendingEffect
-    ? `${view.pendingEffect.count}枚${view.pendingEffect.kind === 'give' ? '渡すカードを選択' : '捨てるカードを選択'}`
-    : labels.includes('革命') || labels.includes('革命返し')
-      ? 'カードの強さが逆転'
-      : 'ローカルルール発動';
-  return { title: [...new Set(labels)].join(' / '), detail, tone: 'action' };
+  return {
+    title: [...new Set(labels)].join(' / '),
+    actor,
+    detail: view.pendingEffect
+      ? `${view.pendingEffect.count}枚${view.pendingEffect.kind === 'give' ? '渡すカードを選択' : '捨てるカードを選択'}`
+      : 'ローカルルール発動',
+    tone: 'action',
+    impact: labels.every((x) => x === '場が流れた') ? 'history' : 'minor',
+  };
 }
 
 export function DaifugoPresentation({
@@ -97,30 +138,51 @@ export function DaifugoPresentation({
   fx: readonly FxEvent[];
   fxKey: string | number;
 }) {
-  // React's guarded previous-render adjustment avoids replay on card selection,
-  // while retaining only the last batch instead of a lagging animation queue.
   const [batch, setBatch] = useState(() => {
     const notice = daifugoNotice(null, view, fx);
-    return { key: fxKey, view, notice, recent: notice ? `${notice.title} — ${notice.detail}` : '' };
+    return {
+      key: fxKey,
+      view,
+      active: notice && notice.impact !== 'history' ? { id: fxKey, notice } : null,
+      recent: notice ? `${notice.title} — ${notice.detail}` : '',
+    };
   });
   if (batch.key !== fxKey) {
     const notice = daifugoNotice(batch.view, view, fx);
+    const newRound = batch.view.dealNumber !== view.dealNumber;
+    const canReplace =
+      notice &&
+      notice.impact !== 'history' &&
+      (newRound ||
+        !batch.active ||
+        notice.impact === 'major' ||
+        notice.tone === 'rank' ||
+        batch.active.notice.impact !== 'major');
     setBatch({
       key: fxKey,
       view,
-      notice,
-      recent: notice ? `${notice.title} — ${notice.detail}` : batch.recent,
+      active: canReplace ? { id: fxKey, notice } : newRound ? null : batch.active,
+      recent: notice ? `${notice.title} — ${notice.detail}` : newRound ? '' : batch.recent,
     });
   }
+  // Normal turns never cut the hold short. No queue, no delay to the game clock.
+  const active = batch.active;
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setTimeout(() => {
+      setBatch((current) => (current.active === active ? { ...current, active: null } : current));
+    }, cutInDuration(active.notice));
+    return () => window.clearTimeout(timer);
+  }, [active]);
   const local = view.activeSeat === view.localSeat;
-  const active = view.players.find((p) => p.seat === view.activeSeat);
+  const activePlayer = view.players.find((p) => p.seat === view.activeSeat);
   const turn =
     view.phaseLabel === 'マッチ終了'
       ? '対局終了'
       : local
         ? 'あなたの手番'
-        : active
-          ? `${active.name} の手番`
+        : activePlayer
+          ? `${activePlayer.name} の手番`
           : '順位を確認中';
   return (
     <>
@@ -136,7 +198,7 @@ export function DaifugoPresentation({
         </span>
         <strong key={`${view.dealNumber}:${view.activeSeat}:${turn}`}>{turn}</strong>
       </div>
-      {batch.notice && <CutIn key={fxKey} notice={batch.notice} />}
+      {active && <CutIn key={active.id} notice={active.notice} />}
       <p
         className={s.recentCue}
         role="status"
@@ -150,18 +212,28 @@ export function DaifugoPresentation({
 }
 
 function CutIn({ notice }: { notice: DaifugoNotice }) {
-  const [visible, setVisible] = useState(true);
-  useEffect(() => {
-    const timer = window.setTimeout(() => setVisible(false), 1300);
-    return () => window.clearTimeout(timer);
-  }, []);
-  if (!visible) return null;
   return (
-    <div className={s.cutInLane} aria-hidden="true" data-testid="daifugo-cut-in">
+    <div
+      className={s.cutInLane}
+      data-impact={notice.impact ?? 'minor'}
+      aria-hidden="true"
+      data-testid="daifugo-cut-in"
+      style={{ '--cut-in-duration': `${cutInDuration(notice)}ms` } as CSSProperties}
+    >
+      <span className={s.cutInSlash} />
       <div className={s.cutIn} data-tone={notice.tone}>
-        <small>{notice.tone === 'rank' ? 'DAIFUGO / RANK' : 'RULE / ACTIVATED'}</small>
+        <span className={s.cutInEcho}>{notice.title}</span>
+        <small>
+          {notice.actor ? `${notice.actor} / ` : ''}
+          {notice.impact === 'major'
+            ? '流れが変わる'
+            : notice.tone === 'rank'
+              ? '順位決定'
+              : '特殊ルール発動'}
+        </small>
         <strong>{notice.title}</strong>
         <p>{notice.detail}</p>
+        {notice.extra && <span className={s.cutInExtra}>{notice.extra}</span>}
       </div>
     </div>
   );
