@@ -27,7 +27,7 @@ deployments are not erased by this commit.
 
 ## Audio removed / replaced
 
-17 M4A music files and 104 MP3 effects/voice recordings were removed from `public/audio`.
+17 M4A music files and 103 MP3 effects/voice recordings were removed from `public/audio`.
 The old procedural ambience WAV was removed from its old URL and regenerated from
 its MIT-licensed source at a new URL. The recording history includes ElevenLabs scripts
 and a later hand-made beach-track replacement commit; it does not establish the precise
