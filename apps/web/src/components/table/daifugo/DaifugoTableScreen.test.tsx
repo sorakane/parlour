@@ -75,7 +75,32 @@ describe('Daifugo local-rule choices', () => {
       expect(cards).toHaveLength(3);
       act(() => cards[0]!.click());
       expect(confirm.disabled).toBe(true);
-      act(() => cards[1]!.click());
+      act(() => cards[0]!.click());
+      const pointer = (type: string, x: number) => {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: x,
+          clientY: 5,
+          button: 0,
+        });
+        Object.defineProperties(event, { pointerId: { value: 1 }, isPrimary: { value: true } });
+        act(() => cards[0]!.dispatchEvent(event));
+      };
+      Object.defineProperty(document, 'elementFromPoint', {
+        configurable: true,
+        value: (x: number) => cards[Math.min(2, Math.floor(x / 10))],
+      });
+      pointer('pointerdown', 0);
+      pointer('pointermove', 28);
+      pointer('pointerup', 28);
+      Reflect.deleteProperty(document, 'elementFromPoint');
+      expect(cards.map((card) => card.getAttribute('aria-pressed'))).toEqual([
+        'true',
+        'true',
+        'false',
+      ]);
+      expect(onConfirm).not.toHaveBeenCalled();
       expect(confirm.disabled).toBe(false);
       act(() => confirm.click());
       expect(onConfirm).toHaveBeenCalledWith(['C4', 'C9']);
@@ -89,4 +114,179 @@ describe('Daifugo local-rule choices', () => {
       );
     },
   );
+});
+
+describe('hand hints and seat positions', () => {
+  function makeView() {
+    const session = createSession(daifugoGame, {
+      seed: 1,
+      seats: 4,
+      config: daifugoConfig.resolve({}),
+    });
+    session.state = {
+      ...session.state,
+      hands: [['C4', 'D4', 'C6', 'D6'], ['S3'], ['H3'], ['D3']],
+      turn: 0,
+      openingCard: null,
+      seatOrder: [3, 1, 0, 2],
+      lastOrder: [2, 0, 1, 3],
+      standing: {
+        seat: 2,
+        cards: ['S3', 'H3'],
+        rank: 3,
+        high: 3,
+        kind: 'set',
+        suits: ['H', 'S'],
+        jokerOnly: false,
+      },
+    };
+    session.phase = phaseFor(session.state);
+    return daifugoTableView(
+      {
+        session,
+        mode: 'rank-up',
+        matchWinner: null,
+        players: [0, 1, 2, 3].map((seat) => ({
+          seat,
+          name: `P${seat}`,
+          avatarId: 'ember',
+          isBot: seat !== 0,
+        })),
+      },
+      daifugoGame.flow.legalMovesFor!(session.state, session.phase, 0),
+    );
+  }
+  it('cycles whole legal groups, waits for confirmation and clears stale selections', () => {
+    const view = makeView();
+    const onConfirm = vi.fn();
+    const render = (fxKey: number) =>
+      act(() => root.render(createElement(DaifugoTableScreen, { view, fx: [], fxKey, onConfirm })));
+    const button = (text: string) =>
+      [...container.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+        b.textContent?.startsWith(text),
+      )!;
+    render(1);
+    expect(container.textContent).toContain('出せる組 2通り');
+    expect(container.querySelector('[data-seat="0"]')?.getAttribute('data-position')).toBe('0');
+    expect(container.querySelector('[data-seat="2"]')?.getAttribute('data-position')).toBe('1');
+    expect(container.querySelector('[data-testid="daifugo-order"]')?.textContent).toBe(
+      '手番順：P3（大貧民） → P1（貧民） → P0（富豪） → P2（大富豪）',
+    );
+    act(() => button('出せる組を見る').click());
+    expect(container.querySelectorAll('[data-hand-card] button[aria-pressed="true"]')).toHaveLength(
+      2,
+    );
+    expect(button('出す (2)').disabled).toBe(false);
+    expect(onConfirm).not.toHaveBeenCalled();
+    act(() => button('次の出せる組').click());
+    act(() => button('出す (2)').click());
+    expect(onConfirm).toHaveBeenCalledWith(['C6', 'D6']);
+    act(() => button('出せる組を見る').click());
+    render(2);
+    expect(container.querySelectorAll('[data-hand-card] button[aria-pressed="true"]')).toHaveLength(
+      0,
+    );
+    expect(button('出す').disabled).toBe(true);
+  });
+  it('hides assistance while busy and on an opponent turn', () => {
+    const view = makeView();
+    act(() =>
+      root.render(createElement(DaifugoTableScreen, { view, fx: [], fxKey: 1, busy: true })),
+    );
+    expect(container.textContent).not.toContain('出せる組を見る');
+    act(() =>
+      root.render(
+        createElement(DaifugoTableScreen, { view: { ...view, decision: null }, fx: [], fxKey: 2 }),
+      ),
+    );
+    expect(container.textContent).not.toContain('出せる組を見る');
+  });
+});
+
+describe('joker declarations and tribute selection', () => {
+  function jokerView(exchange = false) {
+    const session = createSession(daifugoGame, {
+      seed: 1,
+      seats: 4,
+      config: daifugoConfig.resolve({}),
+    });
+    session.state = {
+      ...session.state,
+      hands: [['J0', 'S2', 'H1', 'C4'], ['S3'], ['H3'], ['D3']],
+      turn: exchange ? null : 0,
+      openingCard: null,
+      ...(exchange ? { lastOrder: [3, 2, 1, 0], awaitingGive: [0] } : {}),
+    };
+    session.phase = phaseFor(session.state);
+    return daifugoTableView(
+      {
+        session,
+        mode: 'classic',
+        matchWinner: null,
+        players: [0, 1, 2, 3].map((seat) => ({
+          seat,
+          name: `P${seat}`,
+          avatarId: 'ember',
+          isBot: seat !== 0,
+        })),
+      },
+      daifugoGame.flow.legalMovesFor!(session.state, session.phase, 0),
+    );
+  }
+  it('sends an explicit joker role only after confirmation and clears it next turn', () => {
+    const view = jokerView();
+    const onConfirm = vi.fn();
+    const render = (fxKey: number) =>
+      act(() => root.render(createElement(DaifugoTableScreen, { view, fx: [], fxKey, onConfirm })));
+    render(1);
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[data-hand-card][data-card-id="J0"] button')!
+        .click(),
+    );
+    const select = container.querySelector<HTMLSelectElement>(
+      'select[aria-label="ジョーカー1の代用先"]',
+    )!;
+    act(() => {
+      select.value = 'C8';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(container.textContent).toContain('8切り');
+    expect(onConfirm).not.toHaveBeenCalled();
+    const confirm = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+      (b) => b.textContent === '出す (1)',
+    )!;
+    act(() => confirm.click());
+    expect(onConfirm).toHaveBeenCalledWith(['J0'], { J0: 'C8' });
+    render(2);
+    act(() =>
+      container
+        .querySelector<HTMLButtonElement>('[data-hand-card][data-card-id="J0"] button')!
+        .click(),
+    );
+    expect(container.querySelector<HTMLSelectElement>('select')!.value).toBe('');
+  });
+  it('disables jokers for tribute and accepts the strongest remaining cards', () => {
+    const view = jokerView(true);
+    const onConfirm = vi.fn();
+    act(() =>
+      root.render(createElement(DaifugoTableScreen, { view, fx: [], fxKey: 1, onConfirm })),
+    );
+    expect(
+      container.querySelector<HTMLButtonElement>('[data-hand-card][data-card-id="J0"] button')!
+        .disabled,
+    ).toBe(true);
+    for (const card of ['S2', 'H1'])
+      act(() =>
+        container
+          .querySelector<HTMLButtonElement>(`[data-hand-card][data-card-id="${card}"] button`)!
+          .click(),
+      );
+    const confirm = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+      (b) => b.textContent === '2枚 渡す',
+    )!;
+    expect(confirm.disabled).toBe(false);
+    act(() => confirm.click());
+    expect(onConfirm).toHaveBeenCalledWith(['S2', 'H1']);
+  });
 });

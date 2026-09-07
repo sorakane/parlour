@@ -165,4 +165,32 @@ describe('match end screen', () => {
 
     expect(close).toHaveBeenCalledOnce();
   });
+  it('returns a Daifugo result to its own title and closes its friend room', () => {
+    play('multiplayer:DAIFUGO:finished', 1000, 1);
+    useMatchFlowStore.setState({
+      lastMatch: { ...useMatchFlowStore.getState().lastMatch!, game: 'daifugo' },
+    });
+    const close = vi.fn();
+    const snapshot = {
+      gameId: 'daifugo',
+      connection: 'connected',
+      session: { status: 'ended' },
+    } as unknown as MultiplayerRoomSnapshot;
+    activateMultiplayerSession({
+      getSnapshot: () => snapshot,
+      subscribe: () => () => {},
+      close,
+    } as unknown as MultiplayerRoomSession);
+    render();
+    const back = container.querySelector<HTMLAnchorElement>('a[href="/daifugo"]')!;
+    expect(back.textContent).toBe('大富豪に戻る');
+    expect(container.querySelector('a[href="/"]')).toBeNull();
+    act(() => back.click());
+    expect(close).toHaveBeenCalledOnce();
+  });
+  it('keeps an empty or reloaded result inside Daifugo', () => {
+    render();
+    expect(container.querySelector('a[href="/daifugo"]')).not.toBeNull();
+    expect(container.querySelector('a[href="/"], a[href="/play"]')).toBeNull();
+  });
 });

@@ -7,7 +7,7 @@ import { DaifugoTransport } from '@/lib/solo/DaifugoTransport';
 import { DaifugoJokerSettings } from './DaifugoJokerSettings';
 
 describe('visible joker settings', () => {
-  it.each(['classic', 'local', 'rapid', 'marathon'] as const)(
+  it.each(['classic', 'local', 'rapid', 'marathon', 'rank-up'] as const)(
     'deals two jokers and enables spade-three in the %s preset',
     (mode) => {
       const rules = daifugoRulesFor(mode, {});

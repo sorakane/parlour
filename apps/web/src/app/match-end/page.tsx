@@ -19,6 +19,7 @@ import { useMatchFlowStore } from '@/stores/matchFlow';
 import { useProfileStore } from '@/stores/profile';
 import visual from '@/styles/daifugoVisual.module.css';
 import styles from './matchEnd.module.css';
+import support from '@/styles/daifugoSupport.module.css';
 
 export default function MatchEndPage() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export default function MatchEndPage() {
   // the seat you actually sat in wins over the profile, which may have moved on
   const you = snapshot?.seats.find((seat) => seat.seat === snapshot.localSeat);
 
-  const fallbackRoute = snapshot?.game ? (getGame(snapshot.game).href ?? '/play') : '/play';
+  const fallbackRoute = snapshot?.game ? (getGame(snapshot.game).href ?? '/play') : '/daifugo';
+  const homeRoute = snapshot?.game === 'daifugo' || !snapshot ? '/daifugo' : '/';
 
   // A rematch is published to the existing room, so every peer follows the
   // fresh playing snapshot—even if only one person needed to press the button.
@@ -93,7 +95,7 @@ export default function MatchEndPage() {
 
   return (
     <main
-      className={`${styles.page} ${snapshot?.game === 'daifugo' ? `${visual.theme} ${visual.resultPage}` : ''}`}
+      className={`${styles.page} ${snapshot?.game === 'daifugo' || !snapshot ? `${visual.theme} ${visual.resultPage}` : ''}`}
       data-testid="match-end-page"
     >
       {snapshot ? (
@@ -119,8 +121,12 @@ export default function MatchEndPage() {
               {snapshot.game === 'daifugo' ? 'もう一度遊ぶ' : t('matchEnd.playAgain')}
               {rematching ? '…' : ''}
             </button>
-            <Link href="/" onClick={leaveRoom} className={`btn-fat btn-fat--ghost ${styles.back}`}>
-              {snapshot?.game === 'daifugo' ? '戻る' : t('common.back')}
+            <Link
+              href={homeRoute}
+              onClick={leaveRoom}
+              className={`btn-fat btn-fat--ghost ${styles.back}`}
+            >
+              {snapshot?.game === 'daifugo' ? '大富豪に戻る' : t('common.back')}
             </Link>
           </div>
           {rematchError ? (
@@ -129,22 +135,21 @@ export default function MatchEndPage() {
             </p>
           ) : null}
         </>
-      ) : (
-        <div className={`panel-soft mx-6 max-w-md p-8 text-center ${styles.empty}`}>
+      ) : hydrated ? (
+        <div
+          className={`${support.surface} panel-soft mx-6 max-w-md p-8 text-center ${styles.empty}`}
+        >
           <h1 className="font-display text-2xl font-extrabold text-hearth-50">
-            {t('matchEnd.none')}
+            対戦結果はまだありません
           </h1>
-          <p className="mt-2 text-sm text-dusk-100/85">{t('matchEnd.noneHint')}</p>
+          <p className="mt-2 text-sm text-dusk-100/85">大富豪のタイトルから対戦を始められます。</p>
           <div className="mt-5 flex justify-center gap-3">
-            <Link href="/play" className="btn-fat">
-              {t('matchEnd.playSolo')}
-            </Link>
-            <Link href="/" className="btn-fat btn-fat--ghost">
-              {t('common.back')}
+            <Link href="/daifugo" className="btn-fat">
+              大富豪に戻る
             </Link>
           </div>
         </div>
-      )}
+      ) : null}
     </main>
   );
 }

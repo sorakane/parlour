@@ -133,7 +133,7 @@ export default function JoinPage() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-6 py-8 text-center">
       <Link
-        href="/"
+        href="/daifugo"
         className="pill-soft chrome-nw absolute z-30 text-sm font-bold text-dusk-100 hover:text-hearth-200"
       >
         {t('common.backArrow')}
@@ -221,7 +221,7 @@ function GuestLobby({
           {snapshot.error}
         </p>
         <Link
-          href="/"
+          href="/daifugo"
           onClick={() => {
             session.close();
             clearActiveMultiplayerSession();
@@ -243,7 +243,7 @@ function GuestLobby({
       >
         {t('common.leaveArrow')}
       </button>
-      <LobbyChrome />
+      <LobbyChrome daifugo={snapshot.settings?.gameId === 'daifugo'} />
       <RoomLobby
         snapshot={snapshot}
         code={room.code}

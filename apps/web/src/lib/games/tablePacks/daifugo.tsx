@@ -78,7 +78,12 @@ export const daifugoTablePack = defineTablePack<
         fxKey={fxKey}
         busy={!actingLocally}
         error={error}
-        onConfirm={(cards) => dispatch(daifugoConfirmMove(snapshot.session.phase.phase), { cards })}
+        onConfirm={(cards, jokerAs) =>
+          dispatch(
+            daifugoConfirmMove(snapshot.session.phase.phase),
+            jokerAs ? { cards, jokerAs } : { cards },
+          )
+        }
         onPass={() => dispatch('pass')}
         onQuit={quit}
       />
@@ -133,7 +138,12 @@ export const daifugoTablePack = defineTablePack<
         fxKey={snapshot.fxKey}
         busy={!isLocalActing}
         error={error}
-        onConfirm={(cards) => dispatch(daifugoConfirmMove(session.phase.phase), { cards })}
+        onConfirm={(cards, jokerAs) =>
+          dispatch(
+            daifugoConfirmMove(session.phase.phase),
+            jokerAs ? { cards, jokerAs } : { cards },
+          )
+        }
         onPass={() => dispatch('pass')}
         onQuit={quit}
       />

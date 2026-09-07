@@ -32,6 +32,8 @@ export type PlayingCardProps = {
   card?: string;
   face?: CardFaceHint;
   faceDown?: boolean;
+  backMark?: string;
+  selected?: boolean;
   compact?: boolean;
   disabled?: boolean;
   rotation?: number;
@@ -44,6 +46,8 @@ export function PlayingCard({
   card,
   face,
   faceDown = false,
+  backMark = 'p',
+  selected,
   compact = false,
   disabled = false,
   rotation = 0,
@@ -84,11 +88,12 @@ export function PlayingCard({
         {...chassis}
         onClick={onClick}
         disabled={disabled}
+        aria-pressed={selected}
         aria-label={
           faceDown ? 'Face-down card' : `${actionLabel} ${parsed?.label ?? card ?? 'card'}`
         }
       >
-        <CardContents parsed={parsed} faceDown={faceDown} />
+        <CardContents parsed={parsed} faceDown={faceDown} backMark={backMark} />
       </button>
     );
   }
@@ -100,7 +105,7 @@ export function PlayingCard({
       {...chassis}
       aria-label={faceDown ? 'Face-down card' : parsed?.label}
     >
-      <CardContents parsed={parsed} faceDown={faceDown} />
+      <CardContents parsed={parsed} faceDown={faceDown} backMark={backMark} />
     </span>
   );
 }
@@ -158,11 +163,19 @@ function parseCard(card: string): ParsedCard {
   };
 }
 
-function CardContents({ parsed, faceDown }: { parsed: ParsedCard | null; faceDown: boolean }) {
+function CardContents({
+  parsed,
+  faceDown,
+  backMark,
+}: {
+  parsed: ParsedCard | null;
+  faceDown: boolean;
+  backMark: string;
+}) {
   if (faceDown) {
     return (
       <span className={styles.cardBackInset}>
-        <span>p</span>
+        <span>{backMark}</span>
       </span>
     );
   }

@@ -122,7 +122,7 @@ function ActiveLobby({
       >
         ← Leave
       </Link>
-      <LobbyChrome />
+      <LobbyChrome daifugo={snapshot.settings?.gameId === 'daifugo'} />
       <RoomLobby
         snapshot={snapshot}
         code={room.code}

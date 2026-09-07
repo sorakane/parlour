@@ -6,7 +6,6 @@ import { ColorModeSync } from '@/components/ColorModeSync';
 import { LocaleSync } from '@/components/LocaleSync';
 import { AudioDirector } from '@/components/AudioDirector';
 import { SceneStage } from '@/components/backgrounds/SceneStage';
-import { SplashScreen } from '@/components/SplashScreen';
 import { MenuShell } from '@/components/menu/MenuShell';
 import { WipeOverlay } from '@/components/transitions/WipeOverlay';
 import { PwaRegister } from '@/components/PwaRegister';
@@ -122,7 +121,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SceneStage />
         <MenuShell>{children}</MenuShell>
         <WipeOverlay />
-        <SplashScreen />
         <ComfortSync />
         <ColorModeSync />
         <LocaleSync />

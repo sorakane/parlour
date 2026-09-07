@@ -49,6 +49,30 @@ export function DaifugoJokerSettings({
             : '単体のJOKERに♠3を出すと場が流れ、出した人から再開します。'}
         </p>
       </div>
+      <div>
+        <h3>ジョーカーの代用と交換</h3>
+        <button
+          type="button"
+          role="switch"
+          aria-label="ジョーカーの代用先の特殊効果"
+          aria-checked={rules.jokerEffects}
+          className={s.spadeSwitch}
+          onClick={() => onChange('jokerEffects', !rules.jokerEffects)}
+        >
+          代用先の効果 {rules.jokerEffects ? 'ON' : 'OFF'}
+        </button>
+        <button
+          type="button"
+          role="switch"
+          aria-label="ジョーカーを交換で渡さない"
+          aria-checked={rules.excludeJokersFromExchange}
+          className={s.spadeSwitch}
+          onClick={() => onChange('excludeJokersFromExchange', !rules.excludeJokersFromExchange)}
+        >
+          交換で渡さない {rules.excludeJokersFromExchange ? 'ON' : 'OFF'}
+        </button>
+        <p>役割を指定して8切りなどに使えます。交換の除外は大貧民・貧民から渡す札に適用します。</p>
+      </div>
     </section>
   );
 }

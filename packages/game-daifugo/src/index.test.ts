@@ -62,7 +62,9 @@ describe('Daifugo rules', () => {
   it('keeps joker strongest during revolution, then allows spade-three to clear', () => {
     let state = fixture([['J0', 'S9'], ['S3', 'H9'], ['D3'], ['C3']], {}, { revolution: true });
     state = move(state, 'playSet', 0, ['J0']);
-    expect(validateCombination(state, ['J1'])).not.toBe(true);
+    expect(
+      validateCombination({ ...state, rules: { ...state.rules, jokerEffects: false } }, ['J1']),
+    ).not.toBe(true);
     state = move(state, 'playSet', 1, ['S3']);
     expect(state.standing).toBeNull();
     expect(state.turn).toBe(1);
@@ -192,7 +194,7 @@ describe('Daifugo rules', () => {
   it('requires strongest gifts, allows equal-strength suits, returns selected cards', () => {
     let state = fixture(
       [['S3', 'H3'], ['S4'], ['D2', 'D9'], ['J0', 'S2', 'H2', 'C3']],
-      { exchangeCount: 2 },
+      { exchangeCount: 2, excludeJokersFromExchange: false },
       {
         lastOrder: [0, 1, 2, 3],
         awaitingGive: [2, 3],
@@ -228,14 +230,75 @@ describe('Daifugo rules', () => {
   });
 });
 
+describe('rank-based seating', () => {
+  it.each([4, 5, 6, 7, 8])(
+    'reseats %i players without changing identity or exchange roles',
+    (seats) => {
+      const base = session(7, { seatOrder: 'rank-ascending', nextLeader: 'last' }, seats).state;
+      expect(base.seatOrder).toEqual(Array.from({ length: seats }, (_, seat) => seat));
+      const order = [
+        2,
+        0,
+        ...Array.from({ length: seats }, (_, seat) => seat).filter(
+          (seat) => seat !== 0 && seat !== 2,
+        ),
+      ];
+      const state = { ...base, finished: order, lastOrder: order };
+      const next = move(state, 'openNextDeal', 0);
+      expect(next.seatOrder).toEqual([...order].reverse());
+      expect(next.dealLeader).toBe(order.at(-1));
+      expect(next.awaitingGive).toEqual(order.slice(-2));
+      expect(next.score).toEqual(base.score);
+      expect(state.lastOrder).toEqual(order);
+      expect(roleFor(next.lastOrder!, 2)).toBe('daifugo');
+      expect(roleFor(next.lastOrder!, order.at(-1)!)).toBe('scum');
+      const noExchange = move(
+        { ...state, rules: { ...state.rules, trading: false } },
+        'openNextDeal',
+        0,
+      );
+      expect(noExchange.turn).toBe(order.at(-1));
+      const afterPass = move(
+        {
+          ...noExchange,
+          standing: {
+            seat: order.at(-1)!,
+            cards: ['C3'],
+            rank: 3,
+            high: 3,
+            kind: 'set',
+            suits: ['C'],
+            jokerOnly: false,
+          },
+        },
+        'pass',
+        order.at(-1)!,
+      );
+      expect(afterPass.turn).toBe(order.at(-2));
+    },
+  );
+  it('keeps the independently selected next leader and the existing top-first order', () => {
+    const base = session(7, {
+      seatOrder: 'rank-ascending',
+      nextLeader: 'first',
+      trading: false,
+    }).state;
+    const state = { ...base, finished: [2, 0, 3, 1], lastOrder: [2, 0, 3, 1] };
+    expect(move(state, 'openNextDeal', 0)).toMatchObject({ seatOrder: [1, 3, 0, 2], turn: 2 });
+    expect(
+      move({ ...state, rules: { ...state.rules, seatOrder: 'rank' } }, 'openNextDeal', 0).seatOrder,
+    ).toEqual([2, 0, 3, 1]);
+  });
+});
+
 describe('deterministic full matches', () => {
   it.each([4, 5, 6, 7, 8])(
     'finishes %i-seat matches, conserves cards, and replays every effect',
     (seats) => {
-      for (const seed of [1, 12, 35]) {
+      for (const seed of [1, 12, 35, 46]) {
         const rules = daifugoConfig.resolve({
           targetPoints: 15,
-          seatOrder: seed === 1 ? 'rank' : 'random',
+          seatOrder: seed === 46 ? 'rank-ascending' : seed === 1 ? 'rank' : 'random',
           fiveSkip: true,
           firstPlayer: 'diamond3',
           exchangeCount: (seed % 3) + 1,
@@ -255,7 +318,12 @@ describe('deterministic full matches', () => {
           expect(choice, `stuck at ${step} in ${live.phase.phase}`).not.toBeNull();
           const result = sessionApply(daifugoGame, live, actor, choice!.id, choice!.payload);
           expect(result.rejected).toBeUndefined();
+          const previousDeal = live.state.deal;
           live = result.session;
+          if (seed === 46 && live.state.deal > previousDeal) {
+            expect(live.state.seatOrder).toEqual([...live.state.lastOrder!].reverse());
+            expect(live.state.dealLeader).toBe(live.state.seatOrder[0]);
+          }
           const all = [...live.state.hands.flat(), ...live.state.pile, ...live.state.captured];
           expect(all.length).toBe(54);
           expect(new Set(all).size).toBe(54);

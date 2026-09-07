@@ -169,3 +169,86 @@ phone lobby and phone result components retain readable names and no horizontal
 overflow. Reduced-motion display checked. The five relevant suites pass all 24
 tests; TypeScript and changed-component lint checks pass. Temporary fixture routes
 are removed before the production build.
+
+## Supplied character-sheet replacement (2026-09-07)
+
+The user supplied an eight-character red/ivory/black illustration and requested
+these exact characters. Replaced the preceding generated portraits with the
+unchanged supplied JPEG. Color: retain source colors and lost-edge artwork.
+Typography: keep player labels; frame out source headings/English fragments.
+Composition: eight individually positioned square CSS windows retain faces and
+identity anchors (ribbon, hat, ponytail, flower, glasses and held cards). Motion:
+no changes to existing turn emphasis or reduced-motion behavior.
+
+One shared 1280 × 853 JPEG replaces eight large PNGs. Static import hashing and the
+existing PWA manifest version the asset. No redraw, image generation, pixel editing,
+extra dependencies, game logic, profile IDs or layout changes. The shared component
+applies to Daifugo play, lobby and results. Adjacent names remain accessible labels.
+Source hash and crop coordinates are recorded in the avatar provenance file.
+The earlier anime-generation section describes the replaced revision.
+
+Verified all eight framing windows at 180px/32px and the actual phone table, lobby
+and results. The browser loads one shared image; no horizontal overflow or console
+errors. Relevant 24 tests, TypeScript and changed-component lint checks pass.
+The temporary visual fixture is removed before production build.
+
+## Complete secondary screens and sweep selection (2026-09-07)
+
+Audit: Daifugo setup/table/results/credits already use the editorial palette.
+The shared join, profile, create/waiting-room and portaled how-to-play surfaces
+still used the original blue/glass treatment. Secondary routes now have a black
+scrolling canvas and a red diagonal accent. Lobby styling is explicitly enabled
+for Daifugo; the irrelevant background picker is hidden in its waiting room.
+The profile selector now uses the same supplied character identities as play.
+
+Color: black, red and ivory surfaces with visible neutral borders and focus rings.
+Typography: heavy readable system headings and a large room code; retain semantic
+text and existing localization. Composition: preserve field/control order and
+responsive seats; remove translucent rounded panels and ornamental glow. Motion:
+no new page animations; preserve reduced motion, turn cues and continuous audio.
+
+Daifugo opponent backs and face-down flight cards display D. The shared card keeps
+its previous default for other games. Pressed hand cards expose aria-pressed and
+an ivory selection frame. A pointer sweep paints the first card's selection state:
+start unselected to add, or selected to erase. The segment is sampled at 4px so fast
+swipes cross narrow card slices; each card is visited once per stroke. Primary
+pointer capture keeps the gesture owned by the hand. Cancellation, lost capture,
+disabling, a new fx epoch and unmount end it. Ordinary keyboard/AT clicks still
+work; the synthetic click after a pointer selection is suppressed. Hover fan
+spreading is disabled only for this hand to keep the targets stable.
+
+Selection continues to obey the existing required-count cap and legal-set check.
+Neither swiping nor lifting the finger submits a move; the existing confirmation
+button does. No engine rules, turn order, scoring, networking or audio changes.
+
+Verification: 45 relevant tests pass, including fast/reverse strokes, caps, pointer
+cancellation, secondary pointers, keyboard activation and engine-validated 7-give /
+10-discard choices. Real Chromium mouse and CDP touch inputs at 390×844 and 1280×800
+verify multi-select, erase, tap toggling and explicit confirmation. Phone join,
+profile, guest/host lobby and portaled help are visually reviewed. Test routes are
+removed before export; browser harnesses/screenshots stay outside the repository.
+
+
+## Rank-based seating and legal-hand assistance (2026-09-07)
+
+- Color: keep the existing red / black / ivory palette. A red top edge marks cards participating in a legal combination; a white outline and pressed state identify selection. Text and accessible labels explain both states.
+- Typography: compact, readable Japanese for candidate counts, suit/rank selection and turn order. No new decorative display treatment around frequent choices.
+- Composition: one assistance lane above the existing confirmation buttons; on tall portrait phones lower the action rail into the gap above the hand. Keep the pile and opponent row visible at 4–8 seats. Seats follow `state.seatOrder`, rotated around the local player at position zero; identities, scores and card ownership stay stable.
+- Motion: reuse card selection feedback and the existing reduced-motion-aware seat layout transition. Hints and seat rearrangement never gate game progression.
+- The optional `rank-up` preset selects `seatOrder: rank-ascending` and `nextLeader: last`. Each next deal reverses the complete previous finish order (including neutral ranks and eliminations). The original top-first `rank` setting remains available; independent leader settings are respected. A new match starts without previous ranks.
+- Hints come exclusively from the local player's offered `playSet` moves. Cycle complete combinations with “出せる組を見る”; never dispatch until confirmation. Prefer non-penalty combinations, then larger sets and weaker strength; flag forbidden finishes explicitly. Partial manual selections narrow the highlighted cards to compatible complete sets. No opponent-hand inspection or alternate legality implementation.
+- Verification: engine matches/replay and card conservation for 4–8 players, rank order / leader / exchange roles, special-rule hints, partial selections, candidate cycling, explicit confirmation, turn resets, local room flow, mobile and landscape browser checks.
+
+
+## Declared joker roles and protected tribute (2026-09-07)
+
+- Color / Typography: reuse red, black and ivory, Japanese body text and suit/rank labels. No new visual theme or raster assets.
+- Composition: selecting a joker reveals a compact “ジョーカーの役割を指定” disclosure above the existing confirmation controls. Its bounded, scrollable panel contains a native select for each joker and a resolved-card/effect preview. Close it with the disclosure; the main action remains separate. The played pile records and displays the interpreted faces while retaining the real cards.
+- Motion: immediate native input feedback; no additional animation or blocking delay. A changed event batch discards stale selection/declarations and unmounts the panel.
+- `jokerAs` maps selected physical joker IDs to standard card IDs in the play payload. The engine validates held cards, declaration keys/values, size, kind, strength and locks. The same resolver serves application, bots, hints and effect previews. Auto mode completes same-rank sets or the weakest legal run; explicit declarations enable intentional ranks/suits and effects. With substituted effects enabled, a joker may represent spade-three for its counter, including automatic fallback against a lone joker.
+- `jokerEffects` and `excludeJokersFromExchange` default ON. Staircase wildcard substitution defaults ON but still requires the staircase rule itself. Setting switches allow the old real-card-only effects and joker-inclusive tribute. Tribute exclusion is applied to the lower ranks' required gifts, not the upper ranks' freely chosen returns or 7-give effects.
+- Engine tests cover declarations, endpoint/two-joker runs, locks, substituted effects, penalties, both tribute modes, CPU selection, deterministic replay and card conservation. UI tests cover explicit confirmation, stale declarations and disabled tribute jokers; mocked peer tests carry a declared joker through synchronization, guest reload and host migration. Browser fixtures verify an actual declared 8-cut and a completed joker-free tribute.
+
+## Return paths stay in Daifugo (2026-09-07)
+
+The Daifugo result's return action now points to `/daifugo` and still closes a finished friend room. Profile and join return links use the same destination. The former Parlour startup splash is no longer mounted. The root page reuses the existing Daifugo setup component, so direct visits and cached menu navigation cannot render the former beach-themed Parlour home. A missing or reloaded result uses the Daifugo palette and one explicit return action. Rematch behavior remains unchanged. Verified with result/room-close and menu-shell tests plus browser navigation against the exported app.

@@ -17,13 +17,14 @@ import {
   dealOrder,
 } from '@parlour/engine';
 import { daifugoHowToPlay } from './howto';
-import { daifugoDeck, tryOrder } from './deck';
+import { daifugoDeck, tryOrder, isJoker } from './deck';
 import { DaifugoState, StandingSet, type DaifugoRole } from './state';
 import { DaifugoRules, daifugoConfig } from './config';
 import { daifugoBots } from './bots';
 import { playEffects, forbiddenFinishReason } from './effects';
 import {
-  combination,
+  resolvePlay,
+  type JokerAssignments,
   playableSets,
   sameSuits,
   rankStep,
@@ -286,9 +287,11 @@ function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
     seatOrder:
       state.rules.seatOrder === 'random'
         ? ctx.rng.shuffle(state.seatOrder)
-        : state.rules.seatOrder === 'rank' && state.lastOrder
-          ? [...state.lastOrder]
-          : state.seatOrder,
+        : state.rules.seatOrder === 'rank-ascending' && state.lastOrder
+          ? [...state.lastOrder].reverse()
+          : state.rules.seatOrder === 'rank' && state.lastOrder
+            ? [...state.lastOrder]
+            : state.seatOrder,
     finished: [],
     awaitingGive: [],
     awaitingReturn: null,
@@ -559,12 +562,14 @@ const playSet: Move<DaifugoState> = {
     }
     if (state.lockedOut.includes(seat) || state.passedCycle.includes(seat))
       return error('locked-out', 'この場はパス済みです。');
-    return validateCombination(state, cards);
+    return validateCombination(state, cards, (payload as { jokerAs?: JokerAssignments }).jokerAs);
   },
   apply(state, seat, payload, ctx) {
     const cards = payloadCardList(payload)!;
-    const set = combination(cards, state.rules)!;
-    const effects = playEffects(state, cards);
+    const jokerAs = (payload as { jokerAs?: JokerAssignments }).jokerAs;
+    const resolved = resolvePlay(state, cards, jokerAs)!;
+    const set = resolved.set;
+    const effects = playEffects(state, cards, jokerAs);
     const hands = removeFromHand(state.hands, seat, cards);
     cards.forEach((card, index) =>
       ctx.fx.emit(Fx.DiscardCard, { card, seat, to: 'discard' }, index * SET_STAGGER_MS),
@@ -579,7 +584,7 @@ const playSet: Move<DaifugoState> = {
       ...state,
       hands,
       pile: [...state.pile, ...cards],
-      standing: { seat, cards, ...set },
+      standing: { seat, cards, ...set, effectiveCards: resolved.effectiveCards },
       openingCard: null,
       revolution: effects.revolution ? !state.revolution : state.revolution,
       jackBack: effects.jackBack ? !state.jackBack : state.jackBack,
@@ -593,7 +598,8 @@ const playSet: Move<DaifugoState> = {
         seat,
         clearReason: effects.clearReason,
         skips: effects.skips,
-        forbiddenReason: hands[seat]!.length === 0 ? forbiddenFinishReason(state, cards) : null,
+        forbiddenReason:
+          hands[seat]!.length === 0 ? forbiddenFinishReason(state, cards, jokerAs) : null,
         effects: [
           ...(effects.give && recipient !== null
             ? [{ kind: 'give' as const, count: effects.give, recipient }]
@@ -661,7 +667,10 @@ const giveCards: Move<DaifugoState> = {
     if (!heldOnce(handOf(state, seat), cards)) {
       return error('not-in-hand', 'gifts must come from the giver’s own hand');
     }
-    const strongest = [...handOf(state, seat)]
+    if (state.rules.excludeJokersFromExchange && cards.some(isJoker))
+      return error('joker-exchange', 'ジョーカーを除いて強い順に選んでください。');
+    const strongest = handOf(state, seat)
+      .filter((card) => !state.rules.excludeJokersFromExchange || !isJoker(card))
       .map((card) => tryOrder(card) ?? 0)
       .sort((a, b) => b - a)
       .slice(0, expected);

@@ -1,8 +1,8 @@
 import type { BotPolicy } from '@parlour/engine';
 import type { DaifugoState } from './state';
 import { giftCountFor, roleFor } from './game';
-import { orderOf } from './deck';
-import { combination, reversed } from './combinations';
+import { orderOf, isJoker } from './deck';
+import { resolvePlay, reversed } from './combinations';
 import { forbiddenFinishReason } from './effects';
 
 export const daifugoBots: readonly BotPolicy<DaifugoState>[] = ([1, 2, 3] as const).map((tier) => ({
@@ -24,7 +24,8 @@ export const daifugoBots: readonly BotPolicy<DaifugoState>[] = ([1, 2, 3] as con
       const count = gift
         ? giftCountFor(roleFor(view.lastOrder ?? [], seat) ?? 'neutral', view.rules.exchangeCount)
         : view.awaitingReturn!.count;
-      const cards = [...hand]
+      const cards = hand
+        .filter((card) => !gift || !view.rules.excludeJokersFromExchange || !isJoker(card))
         .sort((a, b) => (gift ? -1 : 1) * (orderOf(a) - orderOf(b)) || a.localeCompare(b))
         .slice(0, count);
       return { id: gift ? 'giveCards' : 'returnCards', payload: { cards } };
@@ -34,7 +35,7 @@ export const daifugoBots: readonly BotPolicy<DaifugoState>[] = ([1, 2, 3] as con
     if (tier === 1) return rng.pick(sets) ?? sets[0]!;
     const score = (move: (typeof sets)[number]) => {
       const cards = (move.payload as { cards: string[] }).cards;
-      const set = combination(cards, view.rules)!;
+      const set = resolvePlay(view, cards)!.set;
       const strength = set.jokerOnly ? 30 : reversed(view) ? 18 - set.rank : set.rank;
       return (
         (cards.length === hand.length ? (forbiddenFinishReason(view, cards) ? 10000 : -1000) : 0) +

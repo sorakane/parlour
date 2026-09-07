@@ -2,6 +2,8 @@ import { defineConfig, type RuleValues } from '@parlour/engine';
 
 export interface DaifugoRules extends RuleValues {
   jokerCount: number;
+  jokerEffects: boolean;
+  excludeJokersFromExchange: boolean;
   stairs: boolean;
   stairsMin: number;
   stairsTwo: boolean;
@@ -115,11 +117,18 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
       default: false,
     },
     {
+      key: 'jokerEffects',
+      group: 'カードの効果',
+      kind: 'toggle',
+      label: 'ジョーカーの代用先の特殊効果を発動する',
+      default: true,
+    },
+    {
       key: 'stairsJoker',
       group: '階段',
       kind: 'toggle',
-      label: '階段の途中の欠番をジョーカーで補う（両端は実札）',
-      default: false,
+      label: 'ジョーカーを階段のどの位置にも使う',
+      default: true,
     },
     {
       key: 'stairsOverlap',
@@ -223,6 +232,13 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
       default: true,
     },
     {
+      key: 'excludeJokersFromExchange',
+      group: '交換・次のゲーム',
+      kind: 'toggle',
+      label: '大貧民・貧民はジョーカーを渡さない',
+      default: true,
+    },
+    {
       key: 'exchangeCount',
       group: '交換・次のゲーム',
       kind: 'int',
@@ -263,7 +279,8 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
       options: [
         { value: 'fixed', label: '固定' },
         { value: 'random', label: '毎ゲームシャッフル' },
-        { value: 'rank', label: '前ゲームの順位順' },
+        { value: 'rank', label: '前ゲームの上位から（大富豪→大貧民）' },
+        { value: 'rank-ascending', label: '前ゲームの下位から（大貧民→大富豪）' },
       ],
     },
     {
@@ -278,6 +295,11 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
   ],
   [
     { id: 'classic', label: 'いつもの大富豪', values: {} },
+    {
+      id: 'rank-up',
+      label: '下位からの席替え卓',
+      values: { seatOrder: 'rank-ascending', nextLeader: 'last' },
+    },
     {
       id: 'local',
       label: 'ローカル卓',

@@ -2,6 +2,7 @@
 
 import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { useState } from 'react';
+import support from '@/styles/daifugoSupport.module.css';
 import type { MultiplayerRoomSnapshot } from '@/app/_multiplayer/roomSession';
 import { useT } from '@/lib/i18n';
 
@@ -86,7 +87,7 @@ export function RoomLobby({
 
   return (
     <section
-      className="panel-soft w-full max-w-4xl p-6 shortscape:p-3"
+      className={`panel-soft w-full max-w-4xl p-6 shortscape:p-3 ${snapshot.settings?.gameId === 'daifugo' ? `${support.surface} ${support.room}` : ''}`}
       aria-labelledby="room-heading"
     >
       <div className="flex flex-wrap items-center justify-between gap-5 shortscape:gap-3">

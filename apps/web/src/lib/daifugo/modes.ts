@@ -2,7 +2,7 @@ import type { GameMode } from '@parlour/engine';
 import type { DaifugoRules } from '@parlour/game-daifugo';
 import { gameModes, isGameModeId } from '@/lib/games';
 
-export type DaifugoModeId = 'classic' | 'rapid' | 'marathon' | 'local';
+export type DaifugoModeId = 'classic' | 'rapid' | 'marathon' | 'local' | 'rank-up';
 
 export type DaifugoModeDef = GameMode;
 
@@ -35,6 +35,7 @@ export function isDaifugoModeId(value: unknown): value is DaifugoModeId {
  * source.
  */
 export function daifugoModeForRules(rules: DaifugoRules): DaifugoModeId {
+  if (rules.seatOrder === 'rank-ascending') return 'rank-up';
   if (rules.stairs || rules.sevenGive || rules.tenDiscard || rules.miyako) return 'local';
   if (rules.targetPoints <= 7) return 'rapid';
   if (rules.targetPoints >= 21) return 'marathon';

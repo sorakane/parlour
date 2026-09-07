@@ -10,10 +10,13 @@ import {
   orderOf,
   MAX_PLAY_SIZE,
   forbiddenFinishReason,
+  isJoker,
+  type JokerAssignments,
 } from '@parlour/game-daifugo';
 import { PRESIDENT_SFX_PACK } from '@/lib/audio/sfx';
 import { useMatchTension } from '@/lib/audio/tension';
 import { DAIFUGO_MATCH_PACE_MS } from '@/lib/daifugo/modes';
+import { daifugoHints, matchingHintCards, sameHandSet } from '@/lib/daifugo/hints';
 import { isValidLocalSet, type DaifugoTableView } from '@/lib/daifugo/view';
 import { useProfileStore } from '@/stores/profile';
 import { useMusicMood } from '@/stores/audio';
@@ -22,6 +25,8 @@ import { type DealPresentation, useDealPresentation } from '@/lib/table/deal-pre
 import { discardRotation, useTableAudio } from '../fx-animation';
 import { HandRail, HandRailCard } from '../HandRail';
 import { PlayingCard } from '../PlayingCard';
+import { DaifugoJokerChoice, faceLabel } from './DaifugoJokerChoice';
+import { useHandSweep } from './useHandSweep';
 import {
   dealStateAttr,
   OpponentFan,
@@ -63,7 +68,7 @@ export type DaifugoTableScreenProps = {
   busy?: boolean;
   error?: string | null;
   /** Confirms the current selection: a set during play, gifts/returns in the exchange. */
-  onConfirm?: (cards: readonly string[]) => void;
+  onConfirm?: (cards: readonly string[], jokerAs?: JokerAssignments) => void;
   onPass?: () => void;
   /** Fired only after the player confirms quitting from the shared table menu. */
   onQuit?: () => void;
@@ -80,6 +85,15 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
     cards: [],
   });
   const selected = selection.key === props.fxKey ? selection.cards : EMPTY_SELECTION;
+  const [assignments, setAssignments] = useState<{
+    key: string | number;
+    values: JokerAssignments;
+  }>({ key: props.fxKey, values: {} });
+  const jokerAs = Object.fromEntries(
+    Object.entries(assignments.key === props.fxKey ? assignments.values : {}).filter(([card]) =>
+      selected.includes(card),
+    ),
+  );
   const deal = useDealPresentation(props.fx, props.fxKey);
   useTableAudio(props.fx, props.fxKey, PRESIDENT_SFX_PACK.id);
 
@@ -104,16 +118,21 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
   const selectionValid = (() => {
     if (!view || selected.length === 0) return false;
     if (view.decision === 'give') {
-      const strongest = [...view.hand]
+      const strongest = view.hand
+        .filter((card) => !view.rules.excludeJokersFromExchange || !isJoker(card))
         .map(orderOf)
         .sort((a, b) => b - a)
         .slice(0, view.giveCount);
       const chosen = selected.map(orderOf).sort((a, b) => b - a);
-      return selected.length === view.giveCount && chosen.every((rank, i) => rank === strongest[i]);
+      return (
+        (!view.rules.excludeJokersFromExchange || !selected.some(isJoker)) &&
+        selected.length === view.giveCount &&
+        chosen.every((rank, i) => rank === strongest[i])
+      );
     }
     if (view.decision?.startsWith('effect-')) return selected.length === view.pendingEffect?.count;
     if (view.decision === 'return') return selected.length === view.returnCount;
-    if (view.decision === 'lead-or-follow') return isValidLocalSet(view, selected);
+    if (view.decision === 'lead-or-follow') return isValidLocalSet(view, selected, jokerAs);
     return false;
   })();
 
@@ -154,6 +173,17 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
     });
   };
 
+  const paintCards = (touched: readonly string[], adding: boolean) => {
+    setSelection((current) => {
+      const cards = current.key === props.fxKey ? current.cards : EMPTY_SELECTION;
+      const cap = requiredCount || (view?.rules.stairs ? MAX_PLAY_SIZE : 6);
+      const next = adding
+        ? [...new Set([...cards, ...touched])].slice(0, cap)
+        : cards.filter((card) => !touched.includes(card));
+      return { key: props.fxKey, cards: next };
+    });
+  };
+
   if (error) {
     return <TableErrorScreen headline="The table lost the thread." message={error} />;
   }
@@ -164,6 +194,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
 
   const compactRing = view.players.length > 4;
   const localBusy = (props.busy ?? false) || deal.dealing;
+  const hints = daifugoHints(view);
+  const hintIndex = hints.findIndex((cards) => sameHandSet(cards, selected));
+  const localPosition = view.seatOrder.indexOf(view.localSeat);
 
   return (
     <ArrivalProvider fx={props.fx} fxKey={props.fxKey} localSeat={view.localSeat}>
@@ -194,7 +227,10 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             <Seat
               key={player.seat}
               player={player}
-              position={(player.seat - view.localSeat + view.players.length) % view.players.length}
+              position={
+                (view.seatOrder.indexOf(player.seat) - localPosition + view.players.length) %
+                view.players.length
+              }
               active={view.activeSeat === player.seat}
               finished={
                 view.finishedOrder.includes(player.seat) || Boolean(player.eliminatedReason)
@@ -208,6 +244,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             busy={localBusy}
             selected={selected}
             onToggle={toggleCard}
+            onPaint={paintCards}
+            selectionEpoch={props.fxKey}
+            jokerAs={jokerAs}
             deal={deal}
           />
           <TableFxLayer
@@ -223,7 +262,10 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
           <span className={daifugoStyles.order} aria-live="polite" data-testid="daifugo-order">
             手番順：
             {view.seatOrder
-              .map((seat) => view.players.find((p) => p.seat === seat)?.name ?? seat)
+              .map((seat) => {
+                const player = view.players.find((p) => p.seat === seat);
+                return `${player?.name ?? seat}${player?.role ? `（${ROLE_LABELS[player.role]}）` : ''}`;
+              })
               .join(' → ')}
           </span>
           {(view.decision === 'give' ||
@@ -247,7 +289,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                   {view.decision?.startsWith('effect-')
                     ? '手札から好きなカードを選んでください。'
                     : view.decision === 'give'
-                      ? '手札から強い順に選んでください。'
+                      ? view.rules.excludeJokersFromExchange
+                        ? 'ジョーカーを除いて、強い順に選んでください。'
+                        : '手札から強い順に選んでください。'
                       : '返すカードを選んでください。'}
                 </span>
               </div>
@@ -255,7 +299,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
           {view.decision === 'lead-or-follow' &&
             selectionValid &&
             selected.length === view.hand.length &&
-            forbiddenFinishReason(view, selected) && (
+            forbiddenFinishReason(view, selected, jokerAs) && (
               <span role="status" className={daifugoStyles.selection}>
                 反則上がり：このまま出すと下位になります
               </span>
@@ -267,9 +311,61 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 この効果で上がると反則になります
               </span>
             )}
+          {view.decision === 'lead-or-follow' && !localBusy && (
+            <div className={visual.handHints}>
+              <span aria-live="polite">
+                {hints.length === 0
+                  ? '今の場に出せる組はありません。パスできます。'
+                  : selected.length > 0
+                    ? selectionValid
+                      ? selected.length === view.hand.length &&
+                        forbiddenFinishReason(view, selected, jokerAs)
+                        ? 'この組は反則上がりです。出すと下位になります'
+                        : `この${selected.length}枚で出せます。「出す」で確定`
+                      : '選択中の札だけでは出せません。強調された札を追加するか、選び直してください。'
+                    : `出せる組 ${hints.length}通り · 赤線の札が候補`}
+              </span>
+              <button
+                type="button"
+                className="btn-fat btn-fat--ghost"
+                disabled={hints.length === 0}
+                onClick={() => {
+                  const next = hints[(hintIndex + 1) % hints.length];
+                  if (next) {
+                    setSelection({ key: props.fxKey, cards: next });
+                    setAssignments({ key: props.fxKey, values: {} });
+                  }
+                }}
+              >
+                {hintIndex < 0
+                  ? '出せる組を見る'
+                  : `次の出せる組 (${hintIndex + 1}/${hints.length})`}
+              </button>
+            </div>
+          )}
+          {view.decision === 'lead-or-follow' && !localBusy && (
+            <DaifugoJokerChoice
+              key={props.fxKey}
+              view={view}
+              cards={selected}
+              jokerAs={jokerAs}
+              onChange={(joker, face) => {
+                const values = { ...jokerAs };
+                if (face) values[joker] = face;
+                else delete values[joker];
+                setAssignments({ key: props.fxKey, values });
+              }}
+            />
+          )}
+          <p className={visual.sweepHint}>なぞって複数選択 · 選択済みからなぞると解除</p>
           {selected.length > 0 && (
             <span className={daifugoStyles.selection} aria-live="polite">
-              選択：{selected.map((card) => DAIFUGO_DECK.faces[card]?.short ?? card).join('・')}
+              選択：
+              {selected
+                .map((card) =>
+                  jokerAs[card] ? `JOKER→${faceLabel(jokerAs[card]!)}` : faceLabel(card),
+                )
+                .join('・')}
             </span>
           )}
           <DaifugoMusicToggle />
@@ -281,7 +377,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 disabled={!selectionValid || localBusy}
                 onClick={() => {
                   if (selectionValid) {
-                    props.onConfirm?.(selected);
+                    if (view.decision === 'lead-or-follow' && Object.keys(jokerAs).length)
+                      props.onConfirm?.(selected, jokerAs);
+                    else props.onConfirm?.(selected);
                     setSelection({ key: props.fxKey, cards: [] });
                   }
                 }}
@@ -312,7 +410,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 disabled={!selectionValid || localBusy}
                 onClick={() => {
                   if (selectionValid) {
-                    props.onConfirm?.(selected);
+                    if (view.decision === 'lead-or-follow' && Object.keys(jokerAs).length)
+                      props.onConfirm?.(selected, jokerAs);
+                    else props.onConfirm?.(selected);
                     setSelection({ key: props.fxKey, cards: [] });
                   }
                 }}
@@ -361,7 +461,9 @@ function Seat({
           count={displayCount}
           max={4}
           spread={18}
-          renderCard={({ rotation }) => <PlayingCard compact faceDown rotation={rotation} />}
+          renderCard={({ rotation }) => (
+            <PlayingCard compact faceDown backMark="D" rotation={rotation} />
+          )}
         />
       )}
       <DaifugoAvatar
@@ -428,6 +530,11 @@ function CenterPile({ view, deal }: { view: DaifugoTableView; deal: DealPresenta
           </div>
         ))}
       </div>
+      {standing?.effectiveCards && standing.cards.some(isJoker) && (
+        <span className={visual.jokerPileMeaning}>
+          代用後：{standing.effectiveCards.map(faceLabel).join('・')}
+        </span>
+      )}
       {standing && (
         <span className={styles.rankChip} data-testid="standing-chip">
           {standing.kind === 'run' ? '階段 ' : ''}
@@ -456,12 +563,18 @@ function LocalHand({
   busy,
   selected,
   onToggle,
+  onPaint,
+  selectionEpoch,
+  jokerAs,
   deal,
 }: {
   view: DaifugoTableView;
   busy: boolean;
   selected: readonly string[];
   onToggle: (card: string) => void;
+  onPaint: (cards: readonly string[], selected: boolean) => void;
+  selectionEpoch: string | number;
+  jokerAs: JokerAssignments;
   deal: DealPresentation;
 }) {
   const plannedHand = orderedHand(
@@ -473,40 +586,53 @@ function LocalHand({
     view.decision === 'give' || view.decision === 'return' || view.decision?.startsWith('effect-');
   const canPick = !busy && (exchanging || view.decision === 'lead-or-follow');
   const showLegality = !busy && view.decision === 'lead-or-follow';
+  const matching = matchingHintCards(view, selected, jokerAs);
+  const sweep = useHandSweep({ enabled: canPick, epoch: selectionEpoch, selected, onPaint });
 
   return (
-    <HandRail
-      count={visibleHand.length}
-      zone={`hand:${view.localSeat}`}
-      label="あなたの手札"
-      dealState={dealStateAttr(deal)}
-      fanPlan={plannedHand}
-    >
-      <AnimatePresence initial={false} mode="popLayout">
-        {visibleHand.map((card, index) => {
-          const playable = view.legal.playableCards.includes(card);
-          const isSelected = selected.includes(card);
-          return (
-            <HandRailCard
-              key={card}
-              cardId={card}
-              index={index}
-              count={visibleHand.length}
-              playable={showLegality ? playable || isSelected : undefined}
-            >
-              <PlayingCard
-                card={card}
-                face={card.startsWith('J') ? DAIFUGO_DECK.faces[card] : undefined}
-                disabled={!canPick}
-                rotation={isSelected ? -4 : 0}
-                actionLabel={isSelected ? '選択解除' : '選択'}
-                onClick={() => canPick && onToggle(card)}
-              />
-            </HandRailCard>
-          );
-        })}
-      </AnimatePresence>
-    </HandRail>
+    <div className={visual.handSweep} {...sweep}>
+      <HandRail
+        count={visibleHand.length}
+        zone={`hand:${view.localSeat}`}
+        label="あなたの手札。なぞって複数選択、選択済みからなぞると解除"
+        dealState={dealStateAttr(deal)}
+        fanPlan={plannedHand}
+      >
+        <AnimatePresence initial={false} mode="popLayout">
+          {visibleHand.map((card, index) => {
+            const playable = matching.has(card);
+            const exchangeExcluded =
+              view.decision === 'give' && view.rules.excludeJokersFromExchange && isJoker(card);
+            const isSelected = selected.includes(card);
+            return (
+              <HandRailCard
+                key={card}
+                cardId={card}
+                index={index}
+                count={visibleHand.length}
+                playable={showLegality ? playable || isSelected : undefined}
+              >
+                <PlayingCard
+                  card={card}
+                  face={card.startsWith('J') ? DAIFUGO_DECK.faces[card] : undefined}
+                  disabled={!canPick || exchangeExcluded}
+                  selected={isSelected}
+                  rotation={isSelected ? -4 : 0}
+                  actionLabel={
+                    isSelected
+                      ? '選択解除'
+                      : showLegality && playable
+                        ? '選択（出せる組の候補）'
+                        : '選択'
+                  }
+                  onClick={() => canPick && !exchangeExcluded && onToggle(card)}
+                />
+              </HandRailCard>
+            );
+          })}
+        </AnimatePresence>
+      </HandRail>
+    </div>
   );
 }
 
@@ -521,6 +647,7 @@ function Cue({ cue, localSeat }: { cue: FxCue; localSeat: number }) {
           card={cue.card}
           face={cue.card?.startsWith('J') ? DAIFUGO_DECK.faces[cue.card] : undefined}
           faceDown={faceDown}
+          backMark="D"
         />
       </TableCardFlight>
     );

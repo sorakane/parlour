@@ -27,6 +27,18 @@ export const daifugoCatalog = defineGameCatalog({
   handOrder: orderDaifugoHand,
   modes: [
     {
+      id: 'rank-up',
+      preset: 'rank-up',
+      name: '下位からの席替え卓',
+      tagline: '大貧民から、次の一手へ',
+      description:
+        '毎ゲーム終了後、大貧民→貧民→平民→富豪→大富豪の順に席替え。次は大貧民から開始します。',
+      facts: ['ゲームごとに席替え', '下位から順番', '交換あり'],
+      accent: '#be1020',
+      shade: '#111112',
+      art,
+    },
+    {
       id: 'local',
       preset: 'local',
       name: 'ローカル卓',

@@ -1,6 +1,7 @@
 import type { LegalMove } from '@parlour/engine';
 import {
   MAX_PLAY_SIZE,
+  type JokerAssignments,
   validateCombination,
   MIN_SEATS,
   roleFor,
@@ -23,6 +24,7 @@ export interface DaifugoSeatView extends DaifugoPlayer {
 }
 
 export interface PileSetView {
+  effectiveCards?: readonly string[];
   seat: number;
   cards: readonly string[];
   rank: number;
@@ -59,6 +61,7 @@ export interface DaifugoTableView {
   legal: {
     /** cards that can participate in some legal set right now */
     playableCards: readonly string[];
+    playableSets: readonly (readonly string[])[];
     pass: boolean;
     give: boolean;
     returnCards: boolean;
@@ -93,9 +96,13 @@ export function daifugoTableView(
 
   // A card is playable when some enumerated set contains it.
   const playable = new Set<string>();
+  const playableSets: string[][] = [];
   for (const move of setMoves) {
     const raw = (move.payload as { cards?: readonly string[] } | undefined)?.cards;
-    if (Array.isArray(raw)) for (const card of raw) playable.add(card);
+    if (Array.isArray(raw)) {
+      playableSets.push([...raw]);
+      for (const card of raw) playable.add(card);
+    }
   }
 
   const order = state.lastOrder;
@@ -173,6 +180,7 @@ export function daifugoTableView(
     returnCount,
     legal: {
       playableCards: [...playable],
+      playableSets,
       pass: offered.some((move) => move.id === 'pass'),
       give: hasGive,
       returnCards: hasReturn,
@@ -182,12 +190,16 @@ export function daifugoTableView(
 }
 
 /** Client-side check for a hand-picked set before sending it to the engine. */
-export function isValidLocalSet(view: DaifugoTableView, cards: readonly string[]): boolean {
+export function isValidLocalSet(
+  view: DaifugoTableView,
+  cards: readonly string[],
+  jokerAs?: JokerAssignments,
+): boolean {
   if (cards.length < 1 || cards.length > MAX_PLAY_SIZE) return false;
   const seen = new Set(cards);
   if (seen.size !== cards.length) return false;
   if (!cards.every((card) => view.hand.includes(card))) return false;
-  return validateCombination(view, cards) === true;
+  return validateCombination(view, cards, jokerAs) === true;
 }
 
 export function minDaifugoSeats(): number {

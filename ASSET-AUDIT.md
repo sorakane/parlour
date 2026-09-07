@@ -88,3 +88,14 @@ The retained original PNGs and exact prompt/hash provenance are in
 This records the production source; it does not claim third-party artwork licenses
 or guarantee exclusive copyright in generated images. Upstream MIT notices, font
 notices and the audio provenance allowlist remain intact.
+
+## User-supplied character sheet (2026-09-07)
+
+The user requested replacement with the attached 写真1.jpg. The unchanged JPEG is
+now `apps/web/src/assets/daifugo/avatars/character-sheet.jpg`; CSS display windows
+select the eight faces. The previous generated PNGs are removed from the current
+asset tree (Git history retains the earlier revision). No new images were generated.
+The manifest records the supplied file hash, dimensions and display coordinates.
+Authorship and a license were not specified for the attachment; none are invented.
+Public credits now identify the portraits as supplied artwork instead of attributing
+them to the earlier OpenAI generation. Existing upstream/font/audio notices remain.

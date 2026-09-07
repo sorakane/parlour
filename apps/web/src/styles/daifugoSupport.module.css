@@ -1,0 +1,151 @@
+/* Secondary screens share Daifugo's palette without recoloring other game setups. */
+.shell {
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #111112;
+  color: #fffaf3;
+  color-scheme: dark;
+  --font-display: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, system-ui, sans-serif;
+}
+.shell > main {
+  padding-top: max(5.5rem, env(safe-area-inset-top));
+  padding-bottom: 3rem;
+}
+.shell > main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 6%;
+  width: 3.5rem;
+  height: 3rem;
+  background: #be1020;
+  transform: skewX(-18deg);
+  pointer-events: none;
+}
+.surface {
+  --hearth-core: #be1020;
+  --hearth-glow: #fffaf3;
+  --ink: #fffaf3;
+  --shadow-glow: none;
+  color: #fffaf3;
+  font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, system-ui, sans-serif;
+}
+.surface :is(h1, h2, h3, strong) {
+  text-shadow: none;
+}
+.shell h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  font-weight: 900;
+}
+.shell h2 {
+  border-left: 5px solid #be1020;
+  padding-left: 0.7rem;
+}
+.surface :global(.font-display) {
+  font-family: inherit;
+}
+.surface :global(.panel-soft),
+.surface :global(.pill-soft),
+.surface :global(.btn-fat),
+.surface :global([class*='bg-dusk-']) {
+  border-radius: 0;
+  background: #1b191a;
+  border-color: #666163;
+  color: #fffaf3;
+  backdrop-filter: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+.surface :global([class*='text-dusk-']),
+.surface :global([class*='text-hearth-']) {
+  color: #e6dfd8;
+}
+.surface :global(.text-warm-glow) {
+  color: #fffaf3;
+  text-shadow: none;
+}
+.surface :global(.btn-fat),
+.surface :global(.pill-soft) {
+  min-height: 44px;
+  font-family: inherit;
+}
+.surface :global(.btn-fat):not(:global(.btn-fat--ghost)) {
+  background: #be1020;
+  border-color: #be1020;
+  color: #fffaf3;
+}
+.surface :is(button, input, select, a):focus-visible {
+  outline: 3px solid #fffaf3;
+  outline-offset: 3px;
+}
+.surface :is(input:not([type='checkbox']):not([type='range']), select) {
+  border-radius: 0;
+  border: 2px solid #827b7b;
+  background: #1b191a;
+  color: #fffaf3;
+  text-shadow: none;
+  box-shadow: none;
+  min-height: 44px;
+}
+.surface :is(input[type='checkbox'], input[type='range']) {
+  accent-color: #be1020;
+}
+.surface button[aria-pressed='true'] {
+  border-color: #fffaf3;
+  background: #be1020;
+  color: #fffaf3;
+}
+.surface button:disabled {
+  opacity: 0.55;
+}
+.room {
+  background: #111112 !important;
+  border-top: 5px solid #be1020 !important;
+}
+.room :global(#room-heading) {
+  font-size: clamp(2rem, 8vw, 4rem);
+  overflow-wrap: anywhere;
+}
+.room ol > li {
+  border-top: 3px solid #be1020;
+  min-width: 0;
+}
+.room ol strong {
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: reduce) {
+  .surface :is(button, input, select, a) {
+    transition: none;
+  }
+}
+
+.surface button {
+  border-radius: 0;
+  min-height: 44px;
+}
+.help {
+  background: #000d;
+  backdrop-filter: none;
+}
+.help [role='document'] {
+  border-top: 5px solid #be1020;
+}
+.help header {
+  border-bottom-color: #be1020;
+}
+.help :is(h2, h3, p, dt, dd) {
+  color: #fffaf3;
+  text-shadow: none;
+}
+.help section {
+  background: none;
+  border-color: #666163;
+  border-radius: 0;
+}
+.help button {
+  min-width: 44px;
+  min-height: 44px;
+  background: #be1020;
+  color: #fffaf3;
+}

@@ -238,8 +238,10 @@ describe('Daifugo room recovery', () => {
           expect(new Set(group.map((p) => live(p).log.length)).size).toBe(1);
         });
       let reachedEffect = false;
-      for (let step = 0; step < (effectKind === 'normal' ? 18 : 500); step++) {
+      let declaredJoker = false;
+      for (let step = 0; step < (effectKind === 'normal' ? 200 : 500); step++) {
         await synced();
+        if (effectKind === 'normal' && declaredJoker) break;
         const state = live(host);
         if (
           effectKind !== 'normal' &&
@@ -251,19 +253,30 @@ describe('Daifugo room recovery', () => {
         }
         const actor = state.phase.actor!;
         const legal = state.def.flow.legalMovesFor!(state.state, state.phase, actor);
-        const choice = daifugoBots[2]!.chooseMove(
+        let choice = daifugoBots[2]!.chooseMove(
           state.def.playerView(state.state, actor),
           actor,
           legal,
           makeRng(step),
           { thinkMs: () => 0 },
         )!;
+        if (effectKind === 'normal') {
+          for (const joker of state.state.hands[actor]!.filter((card) => card.startsWith('J'))) {
+            const payload = { cards: [joker], jokerAs: { [joker]: 'H8' } };
+            if (state.def.moves.playSet!.validate(state.state, actor, payload) === true) {
+              choice = { id: 'playSet', payload };
+              declaredJoker = true;
+              break;
+            }
+          }
+        }
         const count = state.log.length;
         peers[actor]!.send(choice.id, choice.payload);
         await eventually(() => expect(live(host).log.length).toBeGreaterThan(count));
       }
       await synced();
       if (effectKind !== 'normal') expect(reachedEffect).toBe(true);
+      else expect(declaredJoker).toBe(true);
       const reloadSeat = effectKind === 'normal' ? 1 : live(host).state.pendingPlay!.seat;
       const pendingBeforeReload = live(host).state.pendingPlay;
       // A fresh page/session uses the same profile, not a duplicate chair.

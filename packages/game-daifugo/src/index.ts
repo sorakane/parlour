@@ -13,7 +13,13 @@ export {
   MAX_SET_SIZE,
   orderDaifugoHand,
 } from './deck';
-export { combination, reversed, validateCombination } from './combinations';
+export {
+  combination,
+  reversed,
+  validateCombination,
+  resolvePlay,
+  type JokerAssignments,
+} from './combinations';
 
 export { MAX_PLAY_SIZE } from './deck';
 export { playEffects, forbiddenFinishReason } from './effects';

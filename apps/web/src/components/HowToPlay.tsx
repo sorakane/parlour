@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import type { HowToPlayDoc } from '@parlour/engine';
 import { useT } from '@/lib/i18n';
 import styles from '@/styles/howto.module.css';
+import support from '@/styles/daifugoSupport.module.css';
 import { useDialogFocus } from '@/components/table/shell/useDialogFocus';
 
 export type HowToPlayModalProps = {
@@ -39,7 +40,7 @@ export function HowToPlayModal({ open, onClose, doc, title, subtitle }: HowToPla
   const sheet = (
     <div
       ref={dialogRef}
-      className={styles.overlay}
+      className={`${styles.overlay} ${title === '大富豪' || title === 'Daifugo' ? `${support.surface} ${support.help}` : ''}`}
       role="dialog"
       aria-modal="true"
       aria-label={t('howto.playTitle', { title })}

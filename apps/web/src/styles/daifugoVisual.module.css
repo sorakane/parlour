@@ -1604,3 +1604,110 @@
     --daifugo-result-avatar-size: 30px;
   }
 }
+
+/* The wrapper adds event delegation without changing the fixed fan geometry. */
+.handSweep {
+  display: contents;
+}
+.handSweep [data-hand-card] button {
+  touch-action: none;
+  user-select: none;
+}
+.handSweep [data-hand-card] button > * {
+  pointer-events: none;
+}
+.sweepHint {
+  font-size: 0.68rem;
+  color: var(--dg-muted);
+  margin-block: 0.25rem;
+}
+/* Keep the targets still as the pointer crosses the fan; selection has its own cue. */
+.handSweep [data-hand-fan] {
+  --spread-x: 0rem !important;
+  --spread-y: 0rem !important;
+}
+.board .handSweep [data-card-chassis][aria-pressed='true'] {
+  border-color: var(--dg-ink);
+  outline: 3px solid var(--dg-paper);
+  outline-offset: 0;
+}
+
+/* One compact assistance lane; choosing a hint never submits a move. */
+.handHints {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--dg-line);
+  padding-bottom: 0.35rem;
+}
+.handHints > span {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  min-width: 0;
+}
+.board .handHints button {
+  min-height: 44px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.75rem;
+}
+@media (orientation: portrait) and (min-height: 761px) {
+  .board [data-table-actions] {
+    bottom: calc(env(safe-area-inset-bottom) + 8.5rem);
+  }
+}
+
+.jokerChoice {
+  position: relative;
+  flex-basis: 100%;
+  font-size: 0.75rem;
+}
+.jokerChoice summary {
+  cursor: pointer;
+  padding: 0.5rem;
+  border: 1px solid var(--dg-paper);
+  min-height: 44px;
+}
+.jokerChoicePanel {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  width: min(22rem, calc(100vw - 3rem));
+  max-height: 48dvh;
+  overflow-y: auto;
+  padding: 0.8rem;
+  background: var(--dg-ink);
+  color: var(--dg-paper);
+  border: 2px solid var(--dg-red);
+  box-shadow: 0 8px 24px #0009;
+}
+.jokerChoicePanel p {
+  margin-block: 0.5rem;
+  line-height: 1.5;
+}
+.jokerChoicePanel label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.4rem;
+}
+.jokerChoicePanel select {
+  background: var(--dg-paper);
+  color: var(--dg-ink);
+  min-height: 44px;
+  max-width: 65%;
+  padding: 0.35rem;
+}
+.jokerPileMeaning {
+  position: absolute;
+  top: 100%;
+  width: max-content;
+  max-width: 70vw;
+  font-size: 0.7rem;
+  color: var(--dg-paper);
+  background: var(--dg-ink);
+  padding: 0.2rem 0.4rem;
+}

@@ -3,6 +3,8 @@ import type { DaifugoRules } from './config';
 
 /** The set currently standing on the pile — beat it or pass. */
 export interface StandingSet {
+  /** Resolved faces, for explaining joker substitutions; physical cards remain unchanged. */
+  effectiveCards?: readonly CardId[];
   seat: SeatId;
   cards: readonly CardId[];
   /** table-order rank, 3…15 */

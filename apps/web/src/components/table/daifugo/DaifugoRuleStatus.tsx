@@ -51,7 +51,7 @@ export function DaifugoRuleStatus({ view }: { view: DaifugoTableView }) {
           {view.revolution && view.jackBack ? (
             <span>重なって通常順</span>
           ) : (
-            <span>JOKERは最強</span>
+            <span>{view.rankLocked ? 'JOKERも次の数字に合わせる' : '未指定JOKERは最強'}</span>
           )}
         </span>
       </div>

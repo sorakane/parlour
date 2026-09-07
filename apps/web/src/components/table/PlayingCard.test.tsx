@@ -19,6 +19,18 @@ describe('PlayingCard', () => {
     container.remove();
   });
 
+  it('uses a game-specific back while keeping the hidden face private', () => {
+    act(() =>
+      root.render(createElement(PlayingCard, { card: 'S12', faceDown: true, backMark: 'D' })),
+    );
+    expect(container.textContent).toBe('D');
+    expect(container.querySelector('[aria-label]')?.getAttribute('aria-label')).toBe(
+      'Face-down card',
+    );
+    act(() => root.render(createElement(PlayingCard, { faceDown: true })));
+    expect(container.textContent).toBe('p');
+  });
+
   it('prints a standard id as rank and suit', () => {
     act(() => {
       root.render(createElement(PlayingCard, { card: 'S12' }));

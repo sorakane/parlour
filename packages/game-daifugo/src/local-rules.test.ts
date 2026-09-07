@@ -66,12 +66,12 @@ describe('same-suit runs', () => {
     });
     expect(combination(['H1', 'H2', 'H3'], { ...stairs, stairsTwo: true })).toBeNull();
   });
-  it('allows internal joker gaps only when enabled, with unambiguous real endpoints', () => {
-    expect(combination(['H3', 'H5', 'J0'], stairs)).toBeNull();
+  it('allows joker gaps and endpoints when enabled', () => {
+    expect(combination(['H3', 'H5', 'J0'], { ...stairs, stairsJoker: false })).toBeNull();
     const rules = { ...stairs, stairsJoker: true };
     expect(combination(['H3', 'H5', 'J0'], rules)).toMatchObject({ kind: 'run', rank: 3, high: 5 });
     expect(combination(['H3', 'H6', 'J0', 'J1'], rules)).toMatchObject({ high: 6 });
-    expect(combination(['H3', 'H4', 'J0'], rules)).toBeNull();
+    expect(combination(['H3', 'H4', 'J0'], rules)).toMatchObject({ kind: 'run', rank: 3, high: 5 });
     // Same-rank substitution is still a set, not a run.
     expect(combination(['H3', 'J0', 'J1'], rules)?.kind).toBe('set');
   });
@@ -149,7 +149,7 @@ describe('strict lock', () => {
     expect(validateCombination(s, ['S6'])).toBe(true);
     expect(validateCombination(s, ['H6'])).not.toBe(true);
     expect(validateCombination(s, ['S7'])).not.toBe(true);
-    expect(validateCombination(s, ['J0'])).not.toBe(true);
+    expect(validateCombination(s, ['J0'])).toBe(true);
     expect(validateCombination({ ...s, revolution: true }, ['S4'])).toBe(true);
     s = move(s, 'pass', 2);
     s = move(s, 'pass', 3);
@@ -229,7 +229,10 @@ describe('seven give and ten discard', () => {
     s = move(s, 'resolveEffect', 0, ['S7']);
     expect(s.pendingPlay).toBeNull();
     expect(s.hands[1]).toEqual(['H3']);
-    s = fixture([['S10', 'J0', 'C4', 'C5'], ['H3'], ['D3'], ['C3']], { tenDiscard: true });
+    s = fixture([['S10', 'J0', 'C4', 'C5'], ['H3'], ['D3'], ['C3']], {
+      tenDiscard: true,
+      jokerEffects: false,
+    });
     s = move(s, 'playSet', 0, ['S10', 'J0']);
     expect(s.pendingPlay?.effects[0]?.count).toBe(1);
   });

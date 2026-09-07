@@ -6,7 +6,7 @@ import { AVATARS } from '@/lib/avatars';
 import { knockSuccessRate, winRate, useProfileStore } from '@/stores/profile';
 import { useAudioStore } from '@/stores/audio';
 import type { AudioChannel } from '@/lib/audio/AudioManager';
-import { AvatarBadge } from '@/components/AvatarBadge';
+import { DaifugoAvatar as AvatarBadge } from '@/components/DaifugoAvatar';
 import { LOCALES, LOCALE_META, useLocale, useT } from '@/lib/i18n';
 import { headToHead, useHistoryStore, type HeadToHead } from '@/stores/history';
 
@@ -50,7 +50,7 @@ export default function ProfilePage() {
   return (
     <main className="safe-page mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-6">
       <header className="flex items-center justify-between">
-        <Link href="/" className="pill-soft text-sm font-bold text-dusk-100 hover:text-hearth-200">
+        <Link href="/daifugo" className="pill-soft text-sm font-bold text-dusk-100 hover:text-hearth-200">
           {t('common.backArrow')}
         </Link>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-hearth-50">
