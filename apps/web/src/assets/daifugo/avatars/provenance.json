@@ -1,0 +1,80 @@
+{
+  "created": "2026-09-07",
+  "tool": "OpenAI built-in image_gen",
+  "intent": "Original anime-style adult character avatars using fade-away negative space",
+  "postprocessing": "None. Original generated PNGs copied unchanged.",
+  "assets": [
+    {
+      "id": "ember",
+      "prompt": "Create one finished square 1024x1024 game avatar illustration, a completely original beautiful adult anime woman in her twenties, friendly confident bright expression, expressive large anime eyes with attractive clean lashes, short softly layered scarlet bob hairstyle, a small ivory five-point star hairclip on her left. Bust portrait, front three-quarter slight tilt, face centered at x50% y42%, entire head fits within the central 80% of canvas, eyes readable at 40px. Sophisticated hand-drawn anime illustration, NOT a geometric mannequin, NOT chibi, NOT photorealism. Use only saturated red #e71936, ink black #111111 and warm ivory #f7f3e8, large flat solid-color shapes with precise elegant selective detail on eyes and hair near the face. Editorial Japanese game UI aesthetic combined with the historical fade-away / lost-edge negative-space principle: ivory field upper left, broad diagonal solid red field connecting to lower right; her red jacket and lower hair merge EXACTLY into the solid red background without a boundary. Keep facial features, recognizable hairstyle, white collar tips and hair ornament as recognition anchors. At least one side of the ivory cheek should open into ivory background. Do not draw complete shoulder, torso or hair perimeter outlines. Broad quiet negative space in the lower quarter; the viewer completes the missing clothing shape from collar fragments. No transparency, no blur, no eraser-like holes, no gradients, no full outlines. No text, initials, numbers, border, frames, watermark, extra characters, floating cards or complex background. Modest collared outfit. This is an original fictional character, no existing anime character or franchise or contemporary artist imitation.",
+      "file": "ember.png",
+      "sha256": "dfbc23a7132306af54f8589baebca8901c1182260e67802fb047cf1f9b2d609d",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": null
+    },
+    {
+      "id": "juniper",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Long ink-black hair arranged into a thick side braid over one shoulder, a large ivory ribbon tying the braid, gentle thoughtful smile, calm open eyes. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "juniper.png",
+      "sha256": "d37d24c714cac7aa08b3a260489cf3ba20efd924aff148ba3670f3bda3eed80b",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "cobalt",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Short ivory/silver bob haircut, large black headphones with scarlet ear pads, a cheerful playful grin, bright open eyes. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "cobalt.png",
+      "sha256": "541b3ca51b637c8d6dbf2ddda695eb65a988706f59aa022bd3bb6c569fb259cd",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "plum",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Long straight ink-black hair with a graceful side fringe, a small ivory crescent-moon hairpin, elegant composed smile, confident almond-shaped eyes. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "plum.png",
+      "sha256": "1a8b39050c1dba6f2c97533649708b9af43a2702da7ab07f46deb62980a6b8e2",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "marigold",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Scarlet hair in a high sweeping ponytail, a large ivory flower hair ornament at its base, joyful warm open smile, lively eyes. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "marigold.png",
+      "sha256": "e9e7c07c370ed95bfc6a5ab8d8c6de7b7b103b824b15d026685a352b7122ccc7",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "rust",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Short asymmetrical ink-black pixie hairstyle with a bold scarlet forelock, one ivory angular ear cuff, spirited confident half-smile, sharp lively eyes. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "rust.png",
+      "sha256": "284d0df83c44e2c875e61ccd1a3d20bd353fd450ce0af8c34d2398725d3d762f",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "slate",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Long flowing ivory/silver hair, thin ink-black rectangular glasses with clearly visible open eyes behind them, a scarlet hair ribbon, calm intelligent warm smile. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "slate.png",
+      "sha256": "8d593088aeda2a0059ea6f960fc5ab5e5e530856513d548e7e7cc5d4d0a08cc3",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    },
+    {
+      "id": "mint",
+      "prompt": "Create ONE new finished square avatar illustration for the SAME SET as the reference image. Reference is only for unified visual style, rendering quality, palette and fade-away background construction. Create a DIFFERENT original adult anime woman in her twenties: Scarlet twin tails with broad ivory bows, an ivory butterfly hairclip, friendly bright smile, large expressive open eyes. Adult mature facial proportions. Beautiful polished anime illustration, not chibi, not geometric mannequin. Bust portrait, face near center, entire head and identifying accessory within central 85% so recognizable at 32–48px. Use predominantly saturated scarlet red, ink black and warm ivory like the reference. No text, no letters, no numbers, no frames. Broad diagonal red and ivory background, substantial quiet negative space. Fade-away/lost-edge principle is essential: her red modest jacket and shoulder must merge seamlessly into the EXACT same red background with NO outline; keep only crisp ivory collar fragments to imply unseen clothing. Let a portion of outer hair merge with matching ivory or black background shape too. Preserve face, large eyes, hairstyle and accessory as recognition anchors. Detail concentrated in face; flat solid background, no unnecessary texture, no gradients, no translucency, no eraser-like holes, no full-body perimeter outline. One original fictional character only, no existing anime franchise character, no imitation of any contemporary artist. Similar head scale and composition to reference, but unique hairstyle, expression and pose.",
+      "file": "mint.png",
+      "sha256": "978cf7c475f61d8fc0cc7af9e5a7ab7da9793a356dea3c73ca335ac995640f79",
+      "width": 1254,
+      "height": 1254,
+      "styleReference": "ember.png"
+    }
+  ]
+}

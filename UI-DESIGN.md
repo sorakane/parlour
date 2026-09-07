@@ -137,3 +137,35 @@ Reviewed before/after at 124px with 32/48px reductions, the 8-seat phone table a
 phone results with long names. A temporary local fixture renders actual components
 and is removed before production build. The comparison image is stored outside the
 repository as `outputs/fade-away-comparison.png`.
+
+## Anime fade-away portraits (2026-09-07)
+
+Replace all eight Daifugo portrait illustrations while preserving the existing
+portrait slots, stable avatar IDs and their table/lobby/result relationships.
+The preceding vector/fade-away sections describe earlier revisions.
+
+- Color: scarlet red, ink black and warm ivory remain the dominant palette. Red
+  clothing joins the red diagonal ground; pale hair also loses edges into ivory.
+- Typography: remove portrait initials so eyes and facial expression are primary.
+  Existing player names, turn labels and result typography remain unchanged.
+- Composition: original adult anime women with distinct bob/star, braid/ribbon,
+  bob/headphones, long hair/crescent, ponytail/flower, pixie/ear cuff, glasses and
+  twin-tail/butterfly identities. Keep eyes, hair/accessories and collar fragments;
+  omit enclosed shoulders and torso. No new framing or surrounding ornament.
+- Motion: preserve existing turn emphasis and reduced-motion behavior. Fade-away
+  is an opaque color/negative-space relationship, not transparency animation.
+
+The eight illustrations were individually generated with the built-in OpenAI image
+tool. The first is a style reference for the remaining seven, not a borrowed
+franchise image. Exact prompts and source-file hashes are recorded in
+`apps/web/src/assets/daifugo/avatars/provenance.json`. Original PNGs are retained
+without visual postprocessing. Next.js static imports provide versioned URLs and
+intrinsic aspect ratios; the existing PWA manifest includes the exported images.
+Names remain the accessible labels, with decorative portraits hidden from screen
+readers. Game logic, CPU decisions, networking, BGM and layout are unchanged.
+
+Verification: all eight images load at 180px/32px; the actual 8-seat phone table,
+phone lobby and phone result components retain readable names and no horizontal
+overflow. Reduced-motion display checked. The five relevant suites pass all 24
+tests; TypeScript and changed-component lint checks pass. Temporary fixture routes
+are removed before the production build.

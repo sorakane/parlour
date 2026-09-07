@@ -73,3 +73,18 @@ updated to expect the actual replacement soundtrack instead of a removed track.
 ## Pop soundtrack update
 
 The previous drone ambience and its generator were removed. `audio/original/pop-shuffle.wav` is an original 120 BPM C-major instrumental synthesized by `scripts/generate-pop-music.mjs`: plucked oscillator chords and melody, bass, and seeded-noise percussion, with no recordings, external generation service, or borrowed tune. The reproducible source remains under this fork’s MIT license. The provenance allowlist records the new hash. The music controller now lets Howler loop without restarting/fading at each end event.
+
+
+## Original generated avatar replacement (2026-09-07)
+
+Eight original anime-style adult female portraits now replace the previous
+code-drawn Daifugo portraits. They were generated separately using the built-in
+OpenAI image-generation tool; the first generated portrait was used as a style
+reference for the others. No external character image or franchise art was supplied.
+The earlier statement about code-rendered portraits describes the prior revision.
+
+The retained original PNGs and exact prompt/hash provenance are in
+`apps/web/src/assets/daifugo/avatars/`. The public credits disclose image generation.
+This records the production source; it does not claim third-party artwork licenses
+or guarantee exclusive copyright in generated images. Upstream MIT notices, font
+notices and the audio provenance allowlist remain intact.
