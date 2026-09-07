@@ -1,5 +1,6 @@
 'use client';
 
+import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { useState } from 'react';
 import type { MultiplayerRoomSnapshot } from '@/app/_multiplayer/roomSession';
 import { useT } from '@/lib/i18n';
@@ -139,9 +140,18 @@ export function RoomLobby({
             >
               {player ? (
                 <>
-                  <span className="text-4xl shortscape:text-2xl" aria-hidden="true">
-                    {player.avatar}
-                  </span>
+                  {snapshot.settings?.gameId === 'daifugo' ? (
+                    <DaifugoAvatar
+                      avatarId={
+                        snapshot.seats.find((entry) => entry.seat === seat)?.avatarId ?? 'ember'
+                      }
+                      size={48}
+                    />
+                  ) : (
+                    <span className="text-4xl shortscape:text-2xl" aria-hidden="true">
+                      {player.avatar}
+                    </span>
+                  )}
                   <strong className="mt-2 font-display shortscape:mt-0.5 shortscape:text-sm">
                     {player.name}
                     {player.bot ? ` (${t('room.bot')})` : ''}

@@ -11,7 +11,6 @@ import {
   MAX_PLAY_SIZE,
   forbiddenFinishReason,
 } from '@parlour/game-daifugo';
-import { getAvatar } from '@/lib/avatars';
 import { PRESIDENT_SFX_PACK } from '@/lib/audio/sfx';
 import { useMatchTension } from '@/lib/audio/tension';
 import { DAIFUGO_MATCH_PACE_MS } from '@/lib/daifugo/modes';
@@ -38,7 +37,7 @@ import {
   useGameTextSurface,
   useTableMenu,
 } from '../shell';
-import { AvatarBadge } from '@/components/AvatarBadge';
+import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { DaifugoPresentation } from './DaifugoPresentation';
 import { DaifugoRuleStatus } from './DaifugoRuleStatus';
@@ -178,7 +177,9 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             <div className={visual.boardBrand}>
               大富豪<small>DAIFUGO</small>
             </div>
-            <p className={visual.boardPhase}>{view.phaseLabel.split(' · ').slice(0, 2).join(' · ')}</p>
+            <p className={visual.boardPhase}>
+              {view.phaseLabel.split(' · ').slice(0, 2).join(' · ')}
+            </p>
           </div>
         }
       >
@@ -342,8 +343,6 @@ function Seat({
   const systemReduced = useReducedMotion();
   const profileReduced = useProfileStore((state) => state.settings.reducedMotion);
   const reducedMotion = systemReduced || profileReduced;
-  const avatar = getAvatar(player.avatarId);
-  const style = { '--seat-accent': avatar.accent, '--seat-shade': avatar.shade } as CSSProperties;
 
   return (
     <motion.div
@@ -354,7 +353,6 @@ function Seat({
       className={`${visual.seat} ${tableStyles.seat} ${tableStyles[`seat${position}`] ?? ''} ${
         active ? tableStyles.seatActive : ''
       }`}
-      style={style}
       animate={active && !reducedMotion ? { scale: [1, 1.06, 1.02] } : { scale: 1 }}
       transition={{ duration: 0.24, ease: [0.34, 1.56, 0.64, 1] }}
     >
@@ -366,7 +364,7 @@ function Seat({
           renderCard={({ rotation }) => <PlayingCard compact faceDown rotation={rotation} />}
         />
       )}
-      <AvatarBadge
+      <DaifugoAvatar
         avatarId={player.avatarId}
         size="clamp(2.6rem, 5vw, 4.4rem)"
         className={`${tableStyles.avatar} ${visual.seatAvatar}`}

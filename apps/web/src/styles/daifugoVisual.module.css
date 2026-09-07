@@ -401,7 +401,10 @@
   background: #302d2e !important;
 }
 .seatAvatar > * {
-  filter: grayscale(1);
+  filter: none;
+}
+.seat[data-active='true'] .seatAvatar {
+  border-color: var(--dg-red) !important;
 }
 .board .seat::before {
   display: none;
@@ -1581,5 +1584,26 @@
 @media (max-width: 600px) {
   .jokerSettings {
     grid-template-columns: 1fr;
+  }
+}
+
+.resultPlayer {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.resultPlayer > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.resultIdentity {
+  --daifugo-result-avatar-size: 38px;
+}
+@media (max-width: 600px) {
+  .resultPlayer {
+    gap: 0.4rem;
+  }
+  .resultIdentity {
+    --daifugo-result-avatar-size: 30px;
   }
 }

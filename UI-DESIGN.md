@@ -87,3 +87,23 @@ revolution. Ordinary all-pass sweeps update history without a dramatic cut-in.
 
 The same guidance is installed in `japanese-game-ui/SKILL.md`. See `ASSET-AUDIT.md`
 for the separate audio provenance/removal and attribution work.
+
+## Player portraits (2026-09-07)
+
+The former rounded warm portraits were only desaturated on the Daifugo table.
+They are now eight original vector portraits, resolved from the existing avatar ID.
+Color: solid ink / paper with a red diagonal accent. Typography: a bold italic
+initial. Composition: asymmetric hair, headsets, a visor and angular jacket shapes,
+with distinct silhouettes readable at 32px. Motion: no idle motion; the existing
+seat turn emphasis and reduced-motion handling remain unchanged.
+
+`DaifugoAvatar` is shared by the Daifugo table, Daifugo results and the Daifugo
+branch of the friend-room lobby. Other games keep their existing avatars. Player
+names remain visible and accessible; the portrait is decorative, not a second
+spoken label. No profile IDs, selected avatars, scores or game/network behavior
+are changed. All SVG geometry was authored in this fork; no external images,
+franchise assets, or fonts were introduced.
+
+Visual review: 8-portrait lineup at large/32px sizes, 4-seat desktop, 8-seat phone,
+phone results with long names, phone lobby, and reduced-motion mode. Rare states
+use a temporary local route rendering the real components, removed before build.

@@ -1,5 +1,6 @@
 'use client';
 
+import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { useEffect, type ReactNode } from 'react';
 import type { MatchSnapshot } from '@/stores/matchFlow';
 import { getAudioManager } from '@/lib/audio/AudioManager';
@@ -84,9 +85,18 @@ export function DaifugoResult({
                   >
                     <td>{String(entry.rank).padStart(2, '0')}</td>
                     <td>
-                      {player?.name ?? `席 ${entry.seat + 1}`}
-                      {entry.seat === localSeat && <small>あなた</small>}
-                      {entry.seat === result.winner && <small>WINNER</small>}
+                      <span className={s.resultPlayer}>
+                        <DaifugoAvatar
+                          avatarId={player?.avatarId ?? 'ember'}
+                          size="var(--daifugo-result-avatar-size, 38px)"
+                          className={s.resultIdentity}
+                        />
+                        <span>
+                          {player?.name ?? `席 ${entry.seat + 1}`}
+                          {entry.seat === localSeat && <small>あなた</small>}
+                          {entry.seat === result.winner && <small>WINNER</small>}
+                        </span>
+                      </span>
                     </td>
                     <td>
                       {typeof points === 'number' ? points : '—'} <small>pt</small>
