@@ -143,6 +143,48 @@ afterEach(() => {
 });
 
 describe('MusicController', () => {
+  it('lets the audio engine loop without replaying or fading the current voice', () => {
+    const controller = new MusicController(makeManager());
+    controller.play(FALLBACK_TRACK.id);
+    const voice = howlFor(FALLBACK_TRACK.src)!;
+    const play = vi.spyOn(voice, 'play');
+    const fade = vi.spyOn(voice, 'fade');
+    const seek = vi.spyOn(voice, 'seek');
+    voice.emit('end');
+    voice.emit('end');
+    expect(play).not.toHaveBeenCalled();
+    expect(fade).not.toHaveBeenCalled();
+    expect(seek).not.toHaveBeenCalled();
+    expect(voice.playing()).toBe(true);
+    expect(controller.getState().status).toBe('playing');
+    controller.dispose();
+  });
+
+  it('does not dip the volume or replay a track that is already playing', () => {
+    const controller = new MusicController(makeManager());
+    controller.play();
+    const voice = FakeHowl.instances.at(-1)!;
+    const play = vi.spyOn(voice, 'play');
+    const fade = vi.spyOn(voice, 'fade');
+    controller.play();
+    controller.keepAlive();
+    expect(play).not.toHaveBeenCalled();
+    expect(fade).not.toHaveBeenCalled();
+    controller.dispose();
+  });
+
+  it('restores the gain when returning to a different track during a crossfade', () => {
+    const controller = new MusicController(makeManager());
+    controller.play('campfire-1');
+    const first = howlFor('music-campfire-1.m4a')!;
+    controller.play('campfire-2');
+    const fade = vi.spyOn(first, 'fade');
+    controller.play('campfire-1');
+    expect(fade).toHaveBeenCalled();
+    expect(controller.getState().trackId).toBe('campfire-1');
+    controller.dispose();
+  });
+
   it('starts idle on the parlour pack', () => {
     const controller = new MusicController(makeManager());
     expect(controller.getState()).toEqual({

@@ -187,6 +187,18 @@ export class MusicController {
   }
 
   play(trackId?: string): void {
+    // Idempotent requests keep the current voice and gain. A genuine track swap
+    // still fades a returning voice back in, even if it has not finished fading out.
+    const current = this.state.trackId ? this.voices.get(this.state.trackId) : undefined;
+    if (
+      (!trackId || trackId === this.state.trackId) &&
+      this.state.status === 'playing' &&
+      current &&
+      !current.failed &&
+      current.soundId !== null &&
+      current.howl.playing(current.soundId)
+    )
+      return;
     if (trackId) {
       this.start(trackId, true);
       return;
@@ -512,7 +524,9 @@ export class MusicController {
       if (this.state.trackId === trackId) this.next();
     });
     voice.howl.on('end', () => {
-      if (!this.wantPlaying || this.state.status !== 'playing') return;
+      // Howler emits end on each loop too; it already schedules the next cycle.
+      // Restarting here adds a fresh fade and disrupts the continuous soundtrack.
+      if (track.loop || !this.wantPlaying || this.state.status !== 'playing') return;
       if (this.state.trackId === trackId) this.next();
     });
 

@@ -1525,3 +1525,61 @@
 :global(html.reduce-motion) .cutInEcho {
   display: none;
 }
+
+/* Always-visible deck rules, using the same values as the advanced settings. */
+.jokerSettings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  border: 2px solid #fff;
+  border-left: 6px solid var(--dg-red, #ef233c);
+  background: #111;
+  color: #fff;
+  padding: 1rem;
+}
+.jokerSettings h3 {
+  font-size: 1rem;
+  font-weight: 900;
+  margin: 0 0 0.65rem;
+}
+.jokerSettings h3 strong {
+  font-size: 1.4rem;
+  margin-left: 0.4rem;
+}
+.jokerSettings p {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  margin-top: 0.65rem;
+  color: #ddd;
+}
+.jokerChoices {
+  display: flex;
+  gap: 0.5rem;
+}
+.jokerChoices button,
+.spadeSwitch {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #aaa;
+  background: #111;
+  color: #fff;
+  font-weight: 900;
+}
+.jokerChoices button[aria-pressed='true'],
+.spadeSwitch[aria-checked='true'] {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
+  box-shadow: 3px 3px 0 #e71936;
+}
+.jokerChoices button:focus-visible,
+.spadeSwitch:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .jokerSettings {
+    grid-template-columns: 1fr;
+  }
+}

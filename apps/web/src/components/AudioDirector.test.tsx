@@ -135,26 +135,56 @@ describe('AudioDirector', () => {
     vi.unstubAllGlobals();
   });
 
-  it('starts the procedural ambience on the first gesture, not a later effect', async () => {
+  it('keeps one pop voice across setup, table, results, rematch and credits', async () => {
+    nav.pathname = '/daifugo/';
+    await act(async () => root.render(createElement(AudioDirector)));
+    act(() => window.dispatchEvent(new Event('pointerdown')));
+    const voice = FakeHowl.instances.find((howl) => howl.src.endsWith('/pop-shuffle.wav'))!;
+    expect(voice).toBeDefined();
+    const play = vi.spyOn(voice, 'play');
+    const pause = vi.spyOn(voice, 'pause');
+    const fade = vi.spyOn(voice, 'fade');
+    const stop = vi.spyOn(voice, 'stop');
+    for (const path of [
+      '/daifugo/table/',
+      '/match-end/',
+      '/daifugo/table/',
+      '/daifugo/',
+      '/credits/',
+    ]) {
+      nav.pathname = path;
+      await act(async () => root.render(createElement(AudioDirector)));
+      expect(voice.playing()).toBe(true);
+    }
+    expect(FakeHowl.instances.filter((howl) => howl.src.endsWith('/pop-shuffle.wav'))).toHaveLength(
+      1,
+    );
+    expect(play).not.toHaveBeenCalled();
+    expect(pause).not.toHaveBeenCalled();
+    expect(fade).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  it('starts the original pop soundtrack on the first gesture, not a later effect', async () => {
     await act(async () => root.render(createElement(AudioDirector)));
     expect(
-      FakeHowl.instances.some((howl) => howl.src.includes('/audio/original/ambience.wav')),
+      FakeHowl.instances.some((howl) => howl.src.includes('/audio/original/pop-shuffle.wav')),
     ).toBe(false);
 
     act(() => window.dispatchEvent(new Event('pointerdown')));
 
     const theme = FakeHowl.instances.find((howl) =>
-      howl.src.includes('/audio/original/ambience.wav'),
+      howl.src.includes('/audio/original/pop-shuffle.wav'),
     );
     expect(theme).toBeDefined();
     expect(theme?.playing()).toBe(true);
   });
 
-  it('keeps the procedural ambience playing when the shelf route replaces home', async () => {
+  it('keeps the original pop soundtrack playing when the shelf route replaces home', async () => {
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
     const theme = FakeHowl.instances.find((howl) =>
-      howl.src.includes('/audio/original/ambience.wav'),
+      howl.src.includes('/audio/original/pop-shuffle.wav'),
     );
     expect(theme?.playing()).toBe(true);
 
@@ -163,11 +193,11 @@ describe('AudioDirector', () => {
 
     expect(theme?.playing()).toBe(true);
     expect(
-      FakeHowl.instances.filter((howl) => howl.src.includes('/audio/original/ambience.wav')),
+      FakeHowl.instances.filter((howl) => howl.src.includes('/audio/original/pop-shuffle.wav')),
     ).toHaveLength(1);
   });
 
-  it('silences the procedural ambience while hidden and resumes it on foreground', async () => {
+  it('silences the original pop soundtrack while hidden and resumes it on foreground', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (Linux; Android 15; Pixel 9)',
       platform: 'Linux armv8l',
@@ -178,7 +208,7 @@ describe('AudioDirector', () => {
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
     const theme = FakeHowl.instances.find((howl) =>
-      howl.src.includes('/audio/original/ambience.wav'),
+      howl.src.includes('/audio/original/pop-shuffle.wav'),
     );
     expect(theme?.playing()).toBe(true);
 
@@ -200,7 +230,7 @@ describe('AudioDirector', () => {
     expect(theme?.playing()).toBe(true);
   });
 
-  it('keeps the procedural ambience playing when a fullscreen Mac app loses visibility', async () => {
+  it('keeps the original pop soundtrack playing when a fullscreen Mac app loses visibility', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/128',
       platform: 'MacIntel',
@@ -211,7 +241,7 @@ describe('AudioDirector', () => {
     await act(async () => root.render(createElement(AudioDirector)));
     act(() => window.dispatchEvent(new Event('pointerdown')));
     const theme = FakeHowl.instances.find((howl) =>
-      howl.src.includes('/audio/original/ambience.wav'),
+      howl.src.includes('/audio/original/pop-shuffle.wav'),
     );
     expect(theme?.playing()).toBe(true);
 

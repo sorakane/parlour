@@ -226,7 +226,7 @@ describe('TableMenu', () => {
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
     expect(JSON.parse(localStorage.getItem(MUSIC_STORAGE_KEY)!).trackId).toBe('hearth');
     expect(container.querySelector('[data-testid="music-track-title"]')?.textContent).toContain(
-      '合成環境音',
+      'ポップ・シャッフル',
     );
   });
 

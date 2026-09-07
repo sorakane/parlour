@@ -28,17 +28,16 @@ deployments are not erased by this commit.
 ## Audio removed / replaced
 
 17 M4A music files and 103 MP3 effects/voice recordings were removed from `public/audio`.
-The old procedural ambience WAV was removed from its old URL and regenerated from
-its MIT-licensed source at a new URL. The recording history includes ElevenLabs scripts
+The old procedural drone ambience was also removed. The recording history includes ElevenLabs scripts
 and a later hand-made beach-track replacement commit; it does not establish the precise
 creation plan, applicable terms, or transferable permissions for every recording.
 
 Rather than infer rights from those files, this edition uses only seven reproducible
-WAVs under `/audio/original/`: math-only ambience from the upstream generator, three
+WAVs under `/audio/original/`: an original math-only pop instrumental, three
 short original tones, two connection tones, and a silent voice placeholder. No external
 samples, cloned voice, generated service output, or borrowed melody is used. Existing
-music-channel mute preferences continue to control the ambience; the Daifugo control
-now says `環境音`. Voice cues are silent. Event sound IDs and game timing are preserved.
+music-channel mute preferences continue to control the soundtrack; the Daifugo control
+now says `BGM`. Voice cues are silent. Event sound IDs and game timing are preserved.
 
 `generate:audio` now runs only those local math generators. `build` (and `prebuild`) verifies a SHA-256
 allowlist in `/legal/audio-provenance.json`; the old remote-generation scripts cannot
@@ -69,4 +68,8 @@ and Daifugo presentation tests cover mute, lifecycle, valid assets, and cut-in d
 A broad web test run identified a pre-existing HandRail CSS-policy test failure at
 `daifugoVisual.module.css`'s `--hand-rail-max: 46vw` (also present at pre-change HEAD
 959197e). That unrelated prior layout override is retained. The music-menu test was
-updated to expect the actual replacement ambience instead of a removed track.
+updated to expect the actual replacement soundtrack instead of a removed track.
+
+## Pop soundtrack update
+
+The previous drone ambience and its generator were removed. `audio/original/pop-shuffle.wav` is an original 120 BPM C-major instrumental synthesized by `scripts/generate-pop-music.mjs`: plucked oscillator chords and melody, bass, and seeded-noise percussion, with no recordings, external generation service, or borrowed tune. The reproducible source remains under this fork’s MIT license. The provenance allowlist records the new hash. The music controller now lets Howler loop without restarting/fading at each end event.

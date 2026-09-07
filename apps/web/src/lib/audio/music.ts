@@ -86,12 +86,12 @@ export const PARLOUR_PACK: MusicPack = {
   },
 };
 
-/** Procedural ambience, reproducible from generate-ambience.mjs (MIT). No recorded samples. */
+/** Original upbeat synth pop, reproducible from generate-pop-music.mjs (MIT). No samples. */
 export const FALLBACK_TRACK: MusicTrack = {
   id: 'hearth',
-  title: '合成環境音',
-  src: '/audio/original/ambience.wav',
-  volume: 0.6,
+  title: 'ポップ・シャッフル',
+  src: '/audio/original/pop-shuffle.wav',
+  volume: 0.55,
   loop: true,
 };
 

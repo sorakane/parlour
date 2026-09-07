@@ -12,12 +12,12 @@ export function DaifugoMusicToggle() {
     <button
       type="button"
       role="switch"
-      aria-label="合成環境音"
+      aria-label="BGM"
       aria-checked={!muted}
       className="btn-fat btn-fat--ghost"
       onClick={() => toggleMuted('music')}
     >
-      環境音 {muted ? 'OFF' : 'ON'}
+      BGM {muted ? 'OFF' : 'ON'}
     </button>
   );
 }

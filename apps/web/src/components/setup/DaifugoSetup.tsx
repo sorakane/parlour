@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { HowToPlayButton } from '@/components/HowToPlay';
 import type { SetupHelp, SetupMode } from './GameSetupScreen';
@@ -91,7 +92,7 @@ export function DaifugoSetup({
       </div>
       <footer className={s.setupFooter}>
         <span>大富豪 / DAIFUGO</span>
-        <a href="/credits/">クレジット・ライセンス</a>
+        <Link href="/credits/">クレジット・ライセンス</Link>
       </footer>
     </main>
   );

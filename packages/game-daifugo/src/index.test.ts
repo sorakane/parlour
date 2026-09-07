@@ -68,6 +68,31 @@ describe('Daifugo rules', () => {
     expect(state.turn).toBe(1);
     expect(state.revolution).toBe(true);
   });
+  it.each([false, true])(
+    'returns a single joker with spade-three (revolution=%s)',
+    (revolution) => {
+      let state = fixture([['J0', 'S9'], ['S3', 'H9'], ['D3'], ['C3']], {}, { revolution });
+      state = move(state, 'playSet', 0, ['J0']);
+      const legal = daifugoGame.flow.legalMovesFor!(state, phaseFor(state), 1);
+      expect(
+        legal.some(
+          (m) =>
+            m.id === 'playSet' && JSON.stringify(m.payload) === JSON.stringify({ cards: ['S3'] }),
+        ),
+      ).toBe(true);
+      state = move(state, 'playSet', 1, ['S3']);
+      expect(state.standing).toBeNull();
+      expect(state.turn).toBe(1);
+    },
+  );
+  it('honors disabling spade-three and does not counter a joker pair with one card', () => {
+    let off = fixture([['J0', 'S9'], ['S3', 'H9'], ['D3'], ['C3']], { spadeThree: false });
+    off = move(off, 'playSet', 0, ['J0']);
+    expect(validateCombination(off, ['S3'])).not.toBe(true);
+    let pair = fixture([['J0', 'J1', 'S9'], ['S3', 'H9'], ['D3'], ['C3']]);
+    pair = move(pair, 'playSet', 0, ['J0', 'J1']);
+    expect(validateCombination(pair, ['S3'])).not.toBe(true);
+  });
   it('composes revolution and jack-back as XOR, resets only jack-back on sweep', () => {
     let state = fixture([
       ['S11', 'H11', 'D11', 'C11', 'S9'],

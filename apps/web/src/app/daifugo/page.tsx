@@ -3,6 +3,7 @@
 import { useWipeRouter } from '@/hooks/useWipeRouter';
 import { useState } from 'react';
 import { daifugoConfig } from '@parlour/game-daifugo';
+import { DaifugoJokerSettings } from '@/components/setup/DaifugoJokerSettings';
 import { DaifugoPresets } from '@/components/setup/DaifugoPresets';
 import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { RuleSettings } from '@/components/settings/RuleSettings';
@@ -65,6 +66,7 @@ export default function DaifugoSetupPage() {
         />
       }
     >
+      <DaifugoJokerSettings rules={daifugoRulesFor(mode, overrides)} onChange={setRule} />
       <SetupPanel>
         <SeatPicker
           options={SEAT_OPTIONS}
@@ -76,7 +78,7 @@ export default function DaifugoSetupPage() {
         <div className="flex flex-wrap items-center gap-3">
           <DaifugoMusicToggle />
           <p className="text-sm text-dusk-200">
-            合成環境音だけを切り替えます。設定はこのブラウザに保存されます。
+            明るいポップBGM。画面を移っても続けて再生します。ON/OFFは保存されます。
           </p>
         </div>
       </SetupPanel>
