@@ -48,3 +48,27 @@ Installed at /Users/cella/.agents/skills/japanese-game-ui/SKILL.md. Validated wi
 - Existing viewport-level pinch-zoom restriction is inherited from the shared app; this redesign does not change that global setting or claim full WCAG conformance.
 
 Final checks: 20 related tests passed across 6 files; production webpack build and TypeScript passed; ESLint reported no code errors (existing repository-root Next pages-directory warning only). The final static export loads in a fresh browser with `errors: []`, and rule expansion/BGM controls work without horizontal overflow. Result visuals use the local fixture; real match-end behavior is also covered by the existing component tests. No new fixture route is included in the production output.
+
+## Active-rule HUD (2026-09-07)
+
+The previous HUD mixed technical suit codes and effect names into a small phase line.
+A persistent “いまのルール” strip now separates strength order, suit lock, and the next
+rank/count required by strict lock. Color: red identifies active constraints against
+black/white. Typography: large suit symbols and required ranks; Japanese suit names
+remain visible. Composition: a reserved top strip, a left column in short landscape,
+and compact opponents on short phones keep hands and commit controls clear. Motion:
+state updates immediately without blinking, timers, or blocking animations.
+
+The strip reads the public table view directly. Strict-lock display follows the engine's
+rank direction, run-overlap setting, run length and A/2 bounds. Revolution + 11-back
+explicitly shows normal order. Suit/rank locks clear with the current state, including
+when reconnecting, and the spade-three exception is explained when relevant. Previous
+cut-in history is labelled “直前” so it cannot be confused with an active constraint.
+Game rules, transports, legal-move validation, and scoring are unchanged.
+
+Verification: tests compare displayed strict-lock targets to engine validation (sets,
+reversal, simultaneous effects, overlapping/non-overlapping runs and endpoints), check
+immediate reconstructed-state rendering and lock removal, and cover spade-three.
+Browser fixtures use the actual table component at 1280×800, 390×844, 390×667 and
+844×390 with 8 seats and commit controls. The temporary fixture route is removed
+before production build; its source is saved outside the repository in work/.

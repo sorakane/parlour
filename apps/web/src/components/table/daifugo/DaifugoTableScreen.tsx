@@ -41,6 +41,7 @@ import {
 import { AvatarBadge } from '@/components/AvatarBadge';
 import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { DaifugoPresentation } from './DaifugoPresentation';
+import { DaifugoRuleStatus } from './DaifugoRuleStatus';
 import visual from '@/styles/daifugoVisual.module.css';
 import tableStyles from '@/styles/table.module.css';
 import styles from '@/styles/president.module.css';
@@ -177,10 +178,11 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             <div className={visual.boardBrand}>
               大富豪<small>DAIFUGO</small>
             </div>
-            <p className={visual.boardPhase}>{view.phaseLabel}</p>
+            <p className={visual.boardPhase}>{view.phaseLabel.split(' · ').slice(0, 2).join(' · ')}</p>
           </div>
         }
       >
+        <DaifugoRuleStatus view={view} />
         <TablePlayfield
           label="大富豪のテーブル"
           feltMark="大富豪"

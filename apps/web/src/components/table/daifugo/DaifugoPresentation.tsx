@@ -143,7 +143,7 @@ export function DaifugoPresentation({
         aria-atomic="true"
         data-testid="daifugo-recent-event"
       >
-        {batch.recent}
+        {batch.recent ? `直前：${batch.recent}` : ''}
       </p>
     </>
   );

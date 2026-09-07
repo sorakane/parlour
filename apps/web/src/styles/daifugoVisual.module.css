@@ -1105,3 +1105,272 @@
     font-size: 1.15rem;
   }
 }
+
+/* Persistent constraints occupy a reserved top lane, separate from past events. */
+.ruleStatus {
+  position: absolute;
+  z-index: 6;
+  top: max(5.3rem, calc(env(safe-area-inset-top) + 4.3rem));
+  left: 1.25rem;
+  right: 1.25rem;
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1.2fr;
+  gap: 1px;
+  background: var(--dg-line);
+  border: 1px solid var(--dg-line);
+  max-width: 58rem;
+  margin-inline: auto;
+}
+.ruleStatus > div {
+  min-width: 0;
+  padding: 0.45rem 0.8rem;
+  background: var(--dg-ink);
+}
+.ruleLabel {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--dg-muted);
+}
+.ruleConstraint strong,
+.ruleStrength > strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.4;
+}
+.ruleConstraint small,
+.ruleSequence,
+.ruleCauses {
+  display: block;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  color: var(--dg-muted);
+}
+.ruleConstraint[data-active='true'] {
+  background: var(--dg-red);
+}
+.ruleConstraint[data-active='true'] :is(small, .ruleLabel) {
+  color: var(--dg-paper);
+}
+.ruleConstraint .ruleSuits {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 1.4rem;
+  line-height: 1.05;
+}
+.ruleCauses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ruleCauses b {
+  color: var(--dg-paper);
+  border-bottom: 2px solid var(--dg-red);
+}
+.board .seat:is([data-position='2'], [data-position='5'], [data-position='6']) {
+  top: 12rem;
+}
+.board .seat:is([data-position='4'], [data-position='7']) {
+  top: 27%;
+}
+@media (orientation: portrait) {
+  .ruleStatus {
+    top: max(4.8rem, calc(env(safe-area-inset-top) + 3.8rem));
+    left: 1rem;
+    right: 1rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  .ruleStatus > div {
+    padding: 0.35rem 0.5rem;
+  }
+  .ruleStatus .ruleStrength {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 0.5rem;
+    row-gap: 0.15rem;
+  }
+  .ruleStrength .ruleLabel {
+    display: none;
+  }
+  .ruleStrength > strong {
+    font-size: 0.8rem;
+  }
+  .ruleCauses {
+    font-size: 0.6rem;
+  }
+  .ruleConstraint strong {
+    font-size: 0.95rem;
+  }
+  .ruleConstraint small {
+    font-size: 0.6rem;
+  }
+  .board .seat[data-position='2'],
+  .board [data-seat-count]:not([data-seat-count='4']) .seat {
+    top: 12.8rem;
+  }
+  .board .seat:is([data-position='1'], [data-position='3']) {
+    top: 15.5rem;
+  }
+  .board
+    [data-seat-count]:not([data-seat-count='4'])
+    .seat:is([data-position='1'], [data-position='3']) {
+    top: 12.8rem;
+  }
+  .board
+    [data-seat-count]:not([data-seat-count='4'])
+    .seat:is([data-position='5'], [data-position='6'], [data-position='7']) {
+    top: 18.5rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .ruleStatus {
+    top: 5.5rem;
+    right: auto;
+    width: 24vw;
+    grid-template-columns: 1fr;
+  }
+  .ruleStatus > div {
+    padding: 0.25rem 0.4rem;
+  }
+  .ruleConstraint strong,
+  .ruleStrength > strong {
+    font-size: 0.82rem;
+  }
+  .ruleLabel,
+  .ruleConstraint small,
+  .ruleSequence,
+  .ruleCauses {
+    font-size: 0.58rem;
+  }
+  .board .seat:is([data-position='2'], [data-position='5'], [data-position='6']) {
+    top: 1.5rem;
+  }
+  .board .seat[data-position='1'] {
+    left: 27%;
+    top: 47%;
+  }
+  .board .seat[data-position='4'] {
+    left: 28%;
+    top: 24%;
+  }
+  .board .seat[data-position='7'] {
+    top: 24%;
+  }
+}
+@media (min-height: 561px) and (orientation: landscape) {
+  .board .seat:is([data-position='4'], [data-position='7']) {
+    top: 14rem;
+  }
+  .board [data-center-pile] {
+    top: 56%;
+  }
+}
+@media (orientation: portrait) {
+  .board [data-center-pile] {
+    top: 50%;
+  }
+  .ruleConstraint small {
+    font-size: 0.65rem;
+  }
+  .ruleCauses {
+    font-size: 0.65rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .turnLane {
+    bottom: 0.75rem;
+    max-width: 18vw;
+  }
+  .recentCue {
+    bottom: 4.8rem;
+    max-width: 24vw;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='4'] {
+    left: 28%;
+    top: 24%;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .board [data-center-pile] {
+    top: 48%;
+  }
+}
+@media (orientation: portrait) and (max-height: 740px) {
+  .board [data-center-pile] {
+    top: 56%;
+  }
+  .board .seat[data-position='2'],
+  .board [data-seat-count]:not([data-seat-count='4']) .seat {
+    top: 11.8rem;
+  }
+  .board .seat:is([data-position='1'], [data-position='3']) {
+    top: 14.2rem;
+  }
+  .board
+    [data-seat-count]:not([data-seat-count='4'])
+    .seat:is([data-position='1'], [data-position='3']) {
+    top: 11.8rem;
+  }
+  .board
+    [data-seat-count]:not([data-seat-count='4'])
+    .seat:is([data-position='5'], [data-position='6'], [data-position='7']) {
+    top: 16rem;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seatAvatar {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) [data-opponent-fan] [data-card-chassis] {
+    display: none;
+  }
+  .board [data-table-actions] {
+    bottom: calc(env(safe-area-inset-bottom) + 7.5rem);
+  }
+  .turnLane {
+    bottom: 16.5rem;
+    max-width: 28vw;
+  }
+  .recentCue {
+    bottom: 14rem;
+    max-width: 28vw;
+  }
+}
+/* On short wide screens, use one compact opponent row above the pile. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .board.board [data-seat-count]:not([data-seat-count='4']) .seat {
+    top: 1.7rem;
+    left: calc(32% + var(--rule-seat-column, 0) * 9%);
+    right: auto;
+    width: 8vw;
+    translate: -50% 0;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='2'] {
+    --rule-seat-column: 1;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='3'] {
+    --rule-seat-column: 2;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='4'] {
+    --rule-seat-column: 3;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='5'] {
+    --rule-seat-column: 4;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='6'] {
+    --rule-seat-column: 5;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seat[data-position='7'] {
+    --rule-seat-column: 6;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) .seatAvatar {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  .board [data-seat-count]:not([data-seat-count='4']) [data-opponent-fan] {
+    display: none;
+  }
+}
