@@ -16,6 +16,8 @@ export type RuleSettingsProps<C extends RuleValues> = {
   /** Fields marked `advanced` start folded away; set true to open them. */
   defaultOpen?: boolean;
   label?: string;
+  /** Opt-in presentation; schema values and callbacks stay shared. */
+  variant?: 'default' | 'daifugo';
 };
 
 /**
@@ -30,6 +32,7 @@ export function RuleSettings<C extends RuleValues>({
   onReset,
   defaultOpen = false,
   label,
+  variant = 'default',
 }: RuleSettingsProps<C>) {
   const t = useT();
   const heading = label ?? t('setup.advancedOptions');
@@ -43,7 +46,10 @@ export function RuleSettings<C extends RuleValues>({
   if (schema.fields.length === 0) return null;
 
   return (
-    <section className={`${styles.panel} panel-soft`} data-testid="rule-settings">
+    <section
+      className={`${styles.panel} panel-soft ${variant === 'daifugo' ? styles.daifugo : ''}`}
+      data-testid="rule-settings"
+    >
       <button
         type="button"
         className={styles.summary}
@@ -155,7 +161,7 @@ function Field({
   const current = value ?? field.default;
 
   return (
-    <div className={styles.field} data-field={field.key}>
+    <div className={styles.field} data-field={field.key} data-field-kind={field.kind}>
       <div className={styles.fieldText}>
         <label htmlFor={id}>{field.label}</label>
         {field.help && <p>{field.help}</p>}

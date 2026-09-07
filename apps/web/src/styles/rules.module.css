@@ -195,3 +195,209 @@
   font-weight: 700;
   cursor: pointer;
 }
+
+/* Explicit Daifugo variant: do not let shared legacy controls or route CSS
+   ordering restore the orange gradients or the unwrappable choice row. */
+.daifugo.panel {
+  --rule-paper: #fffaf3;
+  --rule-ink: #111112;
+  --rule-red: #be1020;
+  --rule-line: #827b7b;
+  border: 1px solid var(--rule-line);
+  border-radius: 0;
+  overflow: visible;
+  background: var(--rule-ink);
+  color: var(--rule-paper);
+  box-shadow: none;
+  container-type: inline-size;
+}
+.daifugo.panel .summary {
+  padding: 1rem;
+  color: var(--rule-paper);
+  font-family: inherit;
+  text-align: left;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+.daifugo .summary > span {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.daifugo .changed {
+  border-radius: 0;
+  border-color: var(--rule-red);
+  background: var(--rule-red);
+  color: var(--rule-paper);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+}
+.daifugo .body {
+  gap: 1.5rem;
+  padding: 0 1rem 1rem;
+}
+.daifugo .group {
+  min-width: 0;
+  gap: 0;
+}
+.daifugo.panel .groupHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.5rem 0 0.25rem;
+  color: var(--rule-paper);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+.daifugo .groupHeading::before {
+  content: '';
+  flex: none;
+  width: 0.35rem;
+  height: 1rem;
+  background: var(--rule-red);
+  transform: skewX(-18deg);
+}
+.daifugo .field {
+  min-width: 0;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #393537;
+}
+.daifugo .field[data-field-kind='enum'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.daifugo .fieldText {
+  flex: 1;
+  min-width: 0;
+}
+.daifugo.panel .fieldText label {
+  color: var(--rule-paper);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.daifugo.panel .fieldText p,
+.daifugo.panel .houseNote {
+  max-width: 65ch;
+  color: #c9c1be;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+.daifugo .choices {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  min-width: 0;
+  gap: 0.5rem;
+}
+.daifugo.panel .choices button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  height: auto;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--rule-line);
+  border-radius: 0;
+  background: var(--rule-ink);
+  color: var(--rule-paper);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.6;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-shadow: none;
+  text-shadow: none;
+  transition: transform 100ms ease-out;
+}
+.daifugo .choices button::before {
+  content: '';
+  flex: none;
+  width: 0.4rem;
+  height: 0.65rem;
+  border-right: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+  transform: translateY(-0.1rem) rotate(45deg);
+}
+.daifugo.panel .choices button[aria-pressed='true'] {
+  background: var(--rule-red);
+  border-color: var(--rule-paper);
+  color: var(--rule-paper);
+}
+.daifugo .choices button[aria-pressed='true']::before {
+  border-color: currentColor;
+}
+.daifugo.panel button:focus-visible {
+  outline: 3px solid var(--rule-paper);
+  outline-offset: 3px;
+}
+.daifugo.panel .choices button:active {
+  transform: translateY(1px);
+}
+.daifugo.panel .toggle {
+  width: 3.25rem;
+  min-height: 44px;
+  border-radius: 0;
+  border-color: var(--rule-line);
+  background: var(--rule-ink);
+}
+.daifugo.panel .toggle[aria-checked='true'] {
+  background: var(--rule-red);
+  border-color: var(--rule-paper);
+}
+.daifugo .toggle i {
+  border-radius: 0;
+  background: var(--rule-paper);
+  box-shadow: none;
+}
+.daifugo.panel .stepper button,
+.daifugo.panel .reset {
+  min-width: 44px;
+  min-height: 44px;
+  height: auto;
+  border: 1px solid var(--rule-line);
+  border-radius: 0;
+  background: var(--rule-ink);
+  color: var(--rule-paper);
+  font-family: inherit;
+}
+.daifugo .stepper output {
+  color: var(--rule-paper);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.daifugo .reset {
+  padding: 0.5rem 0.75rem;
+}
+@container (max-width: 36rem) {
+  .daifugo .choices {
+    flex-direction: column;
+  }
+  .daifugo .choices button {
+    width: 100%;
+  }
+}
+@container (max-width: 20rem) {
+  .daifugo .field[data-field-kind='int'] {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .daifugo.panel button,
+  .daifugo .toggle i,
+  .daifugo .summary i {
+    transition: none;
+  }
+  .daifugo.panel .choices button:active {
+    transform: none;
+  }
+}

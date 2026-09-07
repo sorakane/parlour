@@ -228,7 +228,6 @@ verify multi-select, erase, tap toggling and explicit confirmation. Phone join,
 profile, guest/host lobby and portaled help are visually reviewed. Test routes are
 removed before export; browser harnesses/screenshots stay outside the repository.
 
-
 ## Rank-based seating and legal-hand assistance (2026-09-07)
 
 - Color: keep the existing red / black / ivory palette. A red top edge marks cards participating in a legal combination; a white outline and pressed state identify selection. Text and accessible labels explain both states.
@@ -238,7 +237,6 @@ removed before export; browser harnesses/screenshots stay outside the repository
 - The optional `rank-up` preset selects `seatOrder: rank-ascending` and `nextLeader: last`. Each next deal reverses the complete previous finish order (including neutral ranks and eliminations). The original top-first `rank` setting remains available; independent leader settings are respected. A new match starts without previous ranks.
 - Hints come exclusively from the local player's offered `playSet` moves. Cycle complete combinations with “出せる組を見る”; never dispatch until confirmation. Prefer non-penalty combinations, then larger sets and weaker strength; flag forbidden finishes explicitly. Partial manual selections narrow the highlighted cards to compatible complete sets. No opponent-hand inspection or alternate legality implementation.
 - Verification: engine matches/replay and card conservation for 4–8 players, rank order / leader / exchange roles, special-rule hints, partial selections, candidate cycling, explicit confirmation, turn resets, local room flow, mobile and landscape browser checks.
-
 
 ## Declared joker roles and protected tribute (2026-09-07)
 
@@ -252,3 +250,11 @@ removed before export; browser harnesses/screenshots stay outside the repository
 ## Return paths stay in Daifugo (2026-09-07)
 
 The Daifugo result's return action now points to `/daifugo` and still closes a finished friend room. Profile and join return links use the same destination. The former Parlour startup splash is no longer mounted. The root page reuses the existing Daifugo setup component, so direct visits and cached menu navigation cannot render the former beach-themed Parlour home. A missing or reloaded result uses the Daifugo palette and one explicit return action. Rematch behavior remains unchanged. Verified with result/room-close and menu-shell tests plus browser navigation against the exported app.
+
+### Local-rule choices — 2026-09-08
+
+- **Color:** solid black `#111112`, warm white `#fffaf3`, selected red `#be1020`; selection also uses a check mark and `aria-pressed`. Borders/focus remain visible without color recognition.
+- **Typography:** readable Japanese Gothic, horizontal bold field headings, full option labels with natural wrapping; no fixed button height or truncated rules.
+- **Composition:** enum headings above their controls, wrapping rows in wide panels and full-width choices below a 36rem container width. One slanted red mark brackets each section; rule text stays on a quiet surface. Narrow numeric fields stack too.
+- **Motion:** only a 100ms press displacement; reduced motion removes displacement/transitions. No game event or callback timing changes.
+- The explicit `RuleSettings` Daifugo variant owns control appearance and layout, preventing legacy orange gradients and non-wrapping flex rows from resurfacing through stylesheet order. Other games keep the default variant.

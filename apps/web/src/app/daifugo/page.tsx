@@ -84,6 +84,7 @@ export default function DaifugoSetupPage() {
       </SetupPanel>
 
       <RuleSettings
+        variant="daifugo"
         label="ローカルルールを設定"
         schema={schema}
         values={daifugoRulesFor(mode, overrides)}
