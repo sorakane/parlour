@@ -71,13 +71,6 @@
   border-bottom: 1px solid var(--dg-line);
   padding-bottom: 1rem;
 }
-.back {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.85rem;
-  font-weight: 800;
-}
 .edition,
 .sectionHeading > span,
 .setupFooter,
@@ -88,6 +81,7 @@
   letter-spacing: 0.16em;
 }
 .navigation > button {
+  margin-inline-start: auto;
   border-radius: 0;
   border-color: var(--dg-paper);
   color: var(--dg-paper);

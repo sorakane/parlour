@@ -1,7 +1,6 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { MenuLink } from '@/components/menu/MenuLink';
 import { HowToPlayButton } from '@/components/HowToPlay';
 import type { SetupHelp, SetupMode } from './GameSetupScreen';
 import s from '@/styles/daifugoVisual.module.css';
@@ -24,9 +23,6 @@ export function DaifugoSetup({
   return (
     <main className={`${s.theme} ${s.setup}`} lang="ja">
       <header className={s.navigation}>
-        <MenuLink href="/games" direction="back" className={s.back}>
-          ← ゲーム一覧
-        </MenuLink>
         <span className={s.edition}>PARLOUR / CARD CLUB</span>
         <HowToPlayButton doc={help.doc} title="大富豪" subtitle={help.subtitle} />
       </header>
