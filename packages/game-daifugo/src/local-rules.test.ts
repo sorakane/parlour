@@ -328,6 +328,7 @@ it.each([4, 5, 6, 7, 8])(
         stairsTwo: true,
         stairsRevolution: true,
         strictLock: true,
+        numberLock: true,
         sevenGive: true,
         tenDiscard: true,
         miyako: true,
@@ -371,3 +372,125 @@ it.each([4, 5, 6, 7, 8])(
   },
   30000,
 );
+
+describe('independent number lock', () => {
+  it('locks 3→4 across suits, advances to 5→6, constrains jokers and clears on passes', () => {
+    let s = fixture(
+      [
+        ['S3', 'C12'],
+        ['H4', 'C13'],
+        ['D5', 'J0', 'S9'],
+        ['C6', 'D12'],
+      ],
+      {
+        numberLock: true,
+        suitLock: false,
+        strictLock: false,
+      },
+    );
+    s = move(s, 'playSet', 0, ['S3']);
+    s = move(s, 'playSet', 1, ['H4']);
+    expect(s).toMatchObject({ rankLocked: true, lockedSuits: [] });
+    for (const suit of ['S', 'H', 'D', 'C'])
+      expect(validateCombination(s, [`${suit}5`])).toBe(true);
+    expect(validateCombination(s, ['D6'])).not.toBe(true);
+    expect(validateCombination(s, ['J0'])).toBe(true);
+    expect(validateCombination(s, ['J0'], { J0: 'C5' })).toBe(true);
+    expect(validateCombination(s, ['J0'], { J0: 'C9' })).not.toBe(true);
+    expect(playableSets(s, 2)).toContainEqual(['D5']);
+    expect(playableSets(s, 2)).not.toContainEqual(['S9']);
+    s = move(s, 'playSet', 2, ['D5']);
+    expect(validateCombination(s, ['C6'])).toBe(true);
+    expect(validateCombination(s, ['C7'])).not.toBe(true);
+    s = move(s, 'pass', 3);
+    s = move(s, 'pass', 0);
+    s = move(s, 'pass', 1);
+    expect(s).toMatchObject({ rankLocked: false, lockedSuits: [], standing: null });
+  });
+  it('combines with suit lock for club 5→6, even when legacy strict lock is off', () => {
+    let s = fixture([['C5', 'S12'], ['C6', 'H13'], ['C7', 'H7', 'C9'], ['D3']], {
+      numberLock: true,
+      suitLock: true,
+      strictLock: false,
+    });
+    s = move(s, 'playSet', 0, ['C5']);
+    s = move(s, 'playSet', 1, ['C6']);
+    expect(s).toMatchObject({ rankLocked: true, lockedSuits: ['C'] });
+    expect(validateCombination(s, ['C7'])).toBe(true);
+    expect(validateCombination(s, ['H7'])).not.toBe(true);
+    expect(validateCombination(s, ['C9'])).not.toBe(true);
+    expect(validateCombination(s, ['J0'], { J0: 'C7' })).toBe(true);
+    expect(validateCombination(s, ['J0'], { J0: 'H7' })).not.toBe(true);
+  });
+  it('can acquire suit lock after number lock has already started', () => {
+    let s = fixture(
+      [
+        ['S3', 'S12'],
+        ['H4', 'H13'],
+        ['H5', 'C13'],
+        ['H6', 'C6'],
+      ],
+      {
+        numberLock: true,
+        suitLock: true,
+      },
+    );
+    s = move(s, 'playSet', 0, ['S3']);
+    s = move(s, 'playSet', 1, ['H4']);
+    expect(s.lockedSuits).toEqual([]);
+    s = move(s, 'playSet', 2, ['H5']);
+    expect(s).toMatchObject({ rankLocked: true, lockedSuits: ['H'] });
+    expect(validateCombination(s, ['H6'])).toBe(true);
+    expect(validateCombination(s, ['C6'])).not.toBe(true);
+  });
+  it('supports pairs and reversed direction', () => {
+    let s = fixture(
+      [['S6', 'H6', 'C12'], ['D5', 'C5', 'C13'], ['S4', 'H4'], ['D3']],
+      {
+        numberLock: true,
+        suitLock: false,
+      },
+      { revolution: true },
+    );
+    s = move(s, 'playSet', 0, ['S6', 'H6']);
+    s = move(s, 'playSet', 1, ['D5', 'C5']);
+    expect(s.rankLocked).toBe(true);
+    expect(validateCombination(s, ['S4', 'H4'])).toBe(true);
+    expect(validateCombination(s, ['S3', 'H3'])).not.toBe(true);
+    expect(validateCombination(s, ['S4'])).not.toBe(true);
+    expect(validateCombination({ ...s, jackBack: true }, ['S6', 'H6'])).toBe(true);
+  });
+  it('does not wrap beyond 2 and clears both constraints on eight cut', () => {
+    let end = fixture([['S1', 'C12'], ['H2', 'C13'], ['D3', 'J0'], ['C3']], {
+      numberLock: true,
+    });
+    end = move(end, 'playSet', 0, ['S1']);
+    end = move(end, 'playSet', 1, ['H2']);
+    expect(end.rankLocked).toBe(true);
+    expect(validateCombination(end, ['D3'])).not.toBe(true);
+    expect(validateCombination(end, ['J0'])).not.toBe(true);
+    let s = fixture([['C6', 'S12'], ['C7', 'H13'], ['C8', 'D12'], ['D3']], {
+      numberLock: true,
+      suitLock: true,
+      eightCut: true,
+    });
+    s = move(s, 'playSet', 0, ['C6']);
+    s = move(s, 'playSet', 1, ['C7']);
+    expect(s).toMatchObject({ rankLocked: true, lockedSuits: ['C'] });
+    s = move(s, 'playSet', 2, ['C8']);
+    expect(s).toMatchObject({ rankLocked: false, lockedSuits: [], standing: null });
+  });
+  it('does not lock skipped ranks or enable itself in existing defaults', () => {
+    for (const rules of [{ numberLock: false }, { numberLock: true }]) {
+      let s = fixture([['S3', 'C12'], ['H5', 'C13'], ['D7'], ['C3']], rules);
+      s = move(s, 'playSet', 0, ['S3']);
+      s = move(s, 'playSet', 1, ['H5']);
+      expect(s.rankLocked).toBe(false);
+      expect(validateCombination(s, ['D7'])).toBe(true);
+    }
+    let s = fixture([['S3', 'C12'], ['H4', 'C13'], ['D7'], ['C3']]);
+    s = move(s, 'playSet', 0, ['S3']);
+    s = move(s, 'playSet', 1, ['H4']);
+    expect(s.rankLocked).toBe(false);
+  });
+});

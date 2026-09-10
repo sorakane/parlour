@@ -241,7 +241,7 @@ function validateResolved(
       state.rankLocked &&
       (set.jokerOnly || set.rank !== standing.rank + (reversed(state) ? -1 : 1) * rankStep(state))
     )
-      return fail('rank-lock', '激縛り中は次の数字の組を選んでください。');
+      return fail('rank-lock', '数縛り中は次の数字の組を選んでください。');
   }
   if (state.lockedSuits?.length) {
     const suits =

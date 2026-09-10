@@ -73,11 +73,15 @@ export function DaifugoRuleStatus({ view }: { view: DaifugoTableView }) {
         </small>
       </div>
       <div className={s.ruleConstraint} data-active={Boolean(next || view.openingCard)}>
-        <span className={s.ruleLabel}>{next ? '激縛り · 次に出す札' : '次に出す札'}</span>
+        <span className={s.ruleLabel}>
+          {next ? `${locked ? '激縛り' : '数縛り'} · 次に出す札` : '次に出す札'}
+        </span>
         <strong>
           {spadeReturn
             ? '♠3 で返せる'
-            : (next ??
+            : ((next && locked && next !== '続く数字なし'
+                ? `${view.lockedSuits.map((suit) => SUITS[suit]?.symbol ?? suit).join('・')} ${next}`
+                : next) ??
               (view.openingCard ? '♦3 を含める' : jokerOnTable ? '返せる札なし' : '数字指定なし'))}
         </strong>
         <small>

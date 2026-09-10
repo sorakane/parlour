@@ -41,6 +41,20 @@ function fixture(cards = ['S8', 'H8'], overrides = {}) {
 }
 
 describe('current rule constraints', () => {
+  it('distinguishes number-only lock and the combined club constraint', () => {
+    const number = fixture(['C6'], { lockedSuits: [] });
+    const html = renderToStaticMarkup(createElement(DaifugoRuleStatus, { view: number }));
+    expect(html).toContain('数縛り · 次に出す札');
+    expect(html).toContain('7 を1枚');
+    expect(html).not.toContain('激縛り');
+    const combined = renderToStaticMarkup(
+      createElement(DaifugoRuleStatus, {
+        view: { ...number, lockedSuits: ['C'] },
+      }),
+    );
+    expect(combined).toContain('激縛り · 次に出す札');
+    expect(combined).toContain('♣ 7 を1枚');
+  });
   it('explains the spade-three exception without losing the current suit lock', () => {
     const base = fixture(['J0'], { rankLocked: false, lockedSuits: ['H'] });
     const view = { ...base, rules: { ...base.rules, spadeThree: true } };

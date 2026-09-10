@@ -45,7 +45,11 @@ export function daifugoNotice(
     if (previous.revolution !== view.revolution) labels.push(view.revolution ? '革命' : '革命返し');
     if (previous.jackBack !== view.jackBack)
       labels.push(view.jackBack ? '11バック' : '11バック解除');
-    if (!previous.rankLocked && view.rankLocked) labels.push('激縛り');
+    if (
+      view.rankLocked &&
+      (!previous.rankLocked || (!previous.lockedSuits.length && view.lockedSuits.length))
+    )
+      labels.push(view.lockedSuits.length ? '激縛り' : '数縛り');
     else if (!previous.lockedSuits.length && view.lockedSuits.length) labels.push('縛り');
   }
   if (

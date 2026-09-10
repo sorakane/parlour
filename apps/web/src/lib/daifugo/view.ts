@@ -150,7 +150,7 @@ export function daifugoTableView(
     phaseLabel += ` · ${pendingEffect.kind === 'give' ? '7渡し' : '10捨て'} ${pendingEffect.count}枚${pendingEffect.recipientName ? ` → ${pendingEffect.recipientName}` : ''}`;
   const effects = [
     state.revolution ? '革命' : '',
-    state.rankLocked ? '激縛り' : '',
+    state.rankLocked ? (state.lockedSuits.length ? '激縛り' : '数縛り') : '',
     state.jackBack ? '11バック' : '',
     state.lockedSuits.length ? `${state.lockedSuits.join('・')}縛り` : '',
   ].filter(Boolean);

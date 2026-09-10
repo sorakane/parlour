@@ -43,6 +43,14 @@ afterEach(() => {
 });
 
 describe('Daifugo presentation follows confirmed state', () => {
+  it('announces number lock and its later combination with suit lock', () => {
+    const before = view();
+    const number = { ...before, rankLocked: true, lockedSuits: [] };
+    const combined = { ...number, lockedSuits: ['C'] };
+    expect(daifugoNotice(before, number, play)?.title).toBe('数縛り');
+    expect(daifugoNotice(number, combined, play)?.title).toBe('激縛り');
+    expect(daifugoNotice(combined, combined, play)).toBeNull();
+  });
   it('announces a revolution once and does not infer one on reconnect or unrelated renders', () => {
     const before = view();
     const after = { ...before, revolution: true };

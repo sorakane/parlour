@@ -592,7 +592,9 @@ const playSet: Move<DaifugoState> = {
         (state.rules.suitLock || (state.rules.strictLock && adjacent)) && matchingSuits
           ? set.suits
           : state.lockedSuits,
-      rankLocked: state.rankLocked || Boolean(state.rules.strictLock && matchingSuits && adjacent),
+      rankLocked:
+        state.rankLocked ||
+        Boolean(adjacent && (state.rules.numberLock || (state.rules.strictLock && matchingSuits))),
       passedCycle: [],
       pendingPlay: {
         seat,

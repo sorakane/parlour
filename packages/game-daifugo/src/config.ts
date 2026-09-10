@@ -12,6 +12,7 @@ export interface DaifugoRules extends RuleValues {
   stairsRevolution: boolean;
   stairsRevolutionCount: number;
   specialsOnStairs: boolean;
+  numberLock: boolean;
   strictLock: boolean;
   sevenGive: boolean;
   tenDiscard: boolean;
@@ -153,6 +154,13 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
       kind: 'toggle',
       label: '階段でも8切り・11バック・5/7/10の効果を使う',
       default: true,
+    },
+    {
+      key: 'numberLock',
+      group: '縛り',
+      kind: 'toggle',
+      label: '数縛り（3→4なら次は5。マーク縛りと併用可）',
+      default: false,
     },
     {
       key: 'strictLock',
