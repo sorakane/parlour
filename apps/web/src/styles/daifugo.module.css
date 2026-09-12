@@ -8,6 +8,17 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+.playActions {
+  flex-basis: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.playActions > button {
+  min-height: 48px;
+}
 .order {
   flex-basis: 100%;
   font-size: 0.75rem;

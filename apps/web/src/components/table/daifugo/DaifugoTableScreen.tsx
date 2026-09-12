@@ -368,7 +368,15 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
             </span>
           )}
           {view.decision === 'lead-or-follow' && (
-            <>
+            <div className={daifugoStyles.playActions}>
+              <button
+                type="button"
+                className="btn-fat btn-fat--ghost"
+                disabled={!view.legal.pass || localBusy}
+                onClick={props.onPass}
+              >
+                パス
+              </button>
               <button
                 type="button"
                 className="btn-fat"
@@ -385,15 +393,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 {confirmLabel}
                 {selected.length > 0 ? ` (${selected.length})` : ''}
               </button>
-              <button
-                type="button"
-                className="btn-fat btn-fat--ghost"
-                disabled={!view.legal.pass || localBusy}
-                onClick={props.onPass}
-              >
-                パス
-              </button>
-            </>
+            </div>
           )}
           {(view.decision === 'give' ||
             view.decision === 'return' ||
