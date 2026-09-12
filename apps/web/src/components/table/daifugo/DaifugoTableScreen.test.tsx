@@ -233,6 +233,34 @@ describe('joker declarations and tribute selection', () => {
       daifugoGame.flow.legalMovesFor!(session.state, session.phase, 0),
     );
   }
+  it('offers the extra pass only when no legal set exists and the player can act', () => {
+    const playable = jokerView();
+    const blocked = {
+      ...playable,
+      legal: { ...playable.legal, playableSets: [], playableCards: [], pass: true },
+    };
+    const onPass = vi.fn();
+    const render = (view: typeof playable, busy = false) =>
+      act(() =>
+        root.render(createElement(DaifugoTableScreen, { view, busy, fx: [], fxKey: 1, onPass })),
+      );
+    const shortcut = () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="パス（出せる組なし）"]');
+    render(playable);
+    expect(shortcut()).toBeNull(); // No selection does not mean there are no playable sets.
+    render(blocked);
+    expect(shortcut()).not.toBeNull();
+    act(() => shortcut()!.click());
+    expect(onPass).toHaveBeenCalledTimes(1);
+    render(blocked, true);
+    expect(shortcut()).toBeNull();
+    render({ ...blocked, legal: { ...blocked.legal, pass: false } });
+    expect(shortcut()).toBeNull();
+    render({ ...blocked, decision: null });
+    expect(shortcut()).toBeNull();
+    render(playable);
+    expect(shortcut()).toBeNull();
+  });
   it('sends an explicit joker role only after confirmation and clears it next turn', () => {
     const view = jokerView();
     const onConfirm = vi.fn();

@@ -393,6 +393,16 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 {confirmLabel}
                 {selected.length > 0 ? ` (${selected.length})` : ''}
               </button>
+              {view.legal.pass && hints.length === 0 && !localBusy && (
+                <button
+                  type="button"
+                  className={`btn-fat btn-fat--ghost ${daifugoStyles.passShortcut}`}
+                  aria-label="パス（出せる組なし）"
+                  onClick={props.onPass}
+                >
+                  パス
+                </button>
+              )}
             </div>
           )}
           {(view.decision === 'give' ||

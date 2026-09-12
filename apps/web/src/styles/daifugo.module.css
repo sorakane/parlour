@@ -11,13 +11,21 @@
 .playActions {
   flex-basis: 100%;
   min-width: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 0.5rem 1.5rem;
 }
 .playActions > button {
   min-height: 48px;
+  justify-self: end;
+}
+.playActions > button:first-child {
+  justify-self: start;
+}
+.playActions > .passShortcut {
+  grid-column: 2;
 }
 .order {
   flex-basis: 100%;
