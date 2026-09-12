@@ -6,6 +6,7 @@ import { nextLockedCards } from './DaifugoRuleStatus';
 import type { FxEvent } from '@parlour/engine';
 import type { DaifugoTableView } from '@/lib/daifugo/view';
 import s from '@/styles/daifugoVisual.module.css';
+import cinematic from '@/styles/daifugoRevolution.module.css';
 
 export type DaifugoNotice = {
   title: string;
@@ -14,8 +15,9 @@ export type DaifugoNotice = {
   impact?: 'major' | 'minor' | 'history';
   actor?: string;
   extra?: string;
+  strength?: 'reversed' | 'normal';
 };
-export const cutInDuration = (notice: DaifugoNotice) => (notice.impact === 'major' ? 1900 : 1300);
+export const cutInDuration = (notice: DaifugoNotice) => (notice.impact === 'major' ? 3600 : 1300);
 const ROLES: Record<string, string> = {
   daifugo: '大富豪',
   vice: '富豪',
@@ -96,6 +98,9 @@ export function daifugoNotice(
             : '場を流して、新しい攻防へ',
       tone: 'action',
       impact: revolution ? 'major' : 'minor',
+      ...(revolution
+        ? { strength: reversed(view) ? ('reversed' as const) : ('normal' as const) }
+        : {}),
     };
   }
   const localRole = fx.find(
@@ -160,7 +165,7 @@ export function DaifugoPresentation({
       (newRound ||
         !batch.active ||
         notice.impact === 'major' ||
-        notice.tone === 'rank' ||
+        view.phaseLabel === 'マッチ終了' ||
         batch.active.notice.impact !== 'major');
     setBatch({
       key: fxKey,
@@ -216,6 +221,32 @@ export function DaifugoPresentation({
 }
 
 function CutIn({ notice }: { notice: DaifugoNotice }) {
+  if (notice.impact === 'major') {
+    return (
+      <div
+        className={cinematic.scene}
+        aria-hidden="true"
+        data-testid="daifugo-cut-in"
+        data-impact="major"
+        style={{ '--cut-in-duration': `${cutInDuration(notice)}ms` } as CSSProperties}
+      >
+        <div className={cinematic.burst} />
+        <div className={cinematic.panel}>
+          <span className={cinematic.echo}>革命</span>
+          <small className={cinematic.actor}>{notice.actor ?? 'プレイヤー'} が発動</small>
+          <strong className={cinematic.title} data-counter={notice.title === '革命返し'}>
+            {notice.title}
+          </strong>
+          <div className={cinematic.strength}>
+            <span>数字の強さ</span>
+            <b>{notice.strength === 'reversed' ? '3 ＞ 2' : '3 ＜ 2'}</b>
+          </div>
+          <p className={cinematic.detail}>{notice.detail}</p>
+          {notice.extra && <span className={cinematic.extra}>{notice.extra}</span>}
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={s.cutInLane}
@@ -229,11 +260,7 @@ function CutIn({ notice }: { notice: DaifugoNotice }) {
         <span className={s.cutInEcho}>{notice.title}</span>
         <small>
           {notice.actor ? `${notice.actor} / ` : ''}
-          {notice.impact === 'major'
-            ? '流れが変わる'
-            : notice.tone === 'rank'
-              ? '順位決定'
-              : '特殊ルール発動'}
+          {notice.tone === 'rank' ? '順位決定' : '特殊ルール発動'}
         </small>
         <strong>{notice.title}</strong>
         <p>{notice.detail}</p>

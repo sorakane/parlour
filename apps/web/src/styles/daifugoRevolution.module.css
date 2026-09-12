@@ -1,0 +1,191 @@
+.scene {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+  overflow: hidden;
+  color: #fffaf3;
+  animation: sceneLife var(--cut-in-duration) linear both;
+}
+.burst {
+  position: absolute;
+  inset: 25% -15% 35%;
+  background: #fffaf3;
+  clip-path: polygon(
+    0 20%,
+    35% 26%,
+    14% 0,
+    50% 16%,
+    90% 0,
+    72% 30%,
+    100% 20%,
+    86% 55%,
+    100% 80%,
+    67% 75%,
+    85% 100%,
+    48% 85%,
+    5% 100%,
+    25% 70%,
+    0 80%
+  );
+  animation: burstEnter 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.panel {
+  position: absolute;
+  top: 32%;
+  left: -2%;
+  width: 104%;
+  padding: 1rem 6%;
+  isolation: isolate;
+  background: #c90020;
+  border-block: 3px solid #fffaf3;
+  box-shadow:
+    0 12px 0 #111112,
+    0 -8px 0 #111112;
+  transform: rotate(-4deg);
+  animation: bandEnter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.echo {
+  position: absolute;
+  right: 3%;
+  top: -0.2em;
+  z-index: -1;
+  color: transparent;
+  -webkit-text-stroke: 1px #fffaf355;
+  font-size: clamp(8rem, 24vw, 18rem);
+  font-weight: 1000;
+  line-height: 1;
+}
+.actor {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.title {
+  display: block;
+  font-size: clamp(5rem, 22vw, 10rem);
+  font-weight: 1000;
+  line-height: 1.1;
+  letter-spacing: -0.06em;
+  text-shadow: 5px 5px 0 #111112;
+  animation: titleEnter 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.title[data-counter='true'] {
+  font-size: clamp(3.4rem, 13vw, 7rem);
+}
+.strength {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.4rem;
+}
+.strength span {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.strength b {
+  background: #fffaf3;
+  color: #111112;
+  padding: 0.05rem 0.8rem;
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+.detail {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  font-weight: 800;
+}
+.extra {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+}
+@keyframes sceneLife {
+  0% {
+    opacity: 0;
+  }
+  4%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes bandEnter {
+  from {
+    transform: translateX(-110%) rotate(-4deg);
+  }
+  to {
+    transform: translateX(0) rotate(-4deg);
+  }
+}
+@keyframes titleEnter {
+  from {
+    transform: scale(1.6) translateX(12%);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes burstEnter {
+  from {
+    transform: scale(0.5) rotate(8deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+@media (orientation: landscape) and (max-height: 560px) {
+  .panel {
+    top: 24%;
+    left: 26%;
+    width: 48%;
+    padding: 0.5rem 1.2rem;
+  }
+  .burst {
+    inset: 18% 20% 24%;
+  }
+  .title {
+    font-size: 3.5rem;
+  }
+  .title[data-counter='true'] {
+    font-size: 2.6rem;
+  }
+  .strength b {
+    font-size: 1.3rem;
+  }
+  .detail {
+    font-size: 0.7rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .scene * {
+    animation: none !important;
+  }
+  .panel {
+    transform: none;
+  }
+  .burst,
+  .echo {
+    display: none;
+  }
+}
+:global(html.reduce-motion) .scene,
+:global(html.reduce-motion) .scene * {
+  animation: none !important;
+}
+:global(html.reduce-motion) .panel {
+  transform: none;
+}
+:global(html.reduce-motion) .burst,
+:global(html.reduce-motion) .echo {
+  display: none;
+}

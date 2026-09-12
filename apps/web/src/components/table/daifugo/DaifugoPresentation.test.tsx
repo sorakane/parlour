@@ -54,7 +54,10 @@ describe('Daifugo presentation follows confirmed state', () => {
   it('announces a revolution once and does not infer one on reconnect or unrelated renders', () => {
     const before = view();
     const after = { ...before, revolution: true };
-    expect(daifugoNotice(before, after, play)?.title).toBe('革命');
+    expect(daifugoNotice(before, after, play)).toMatchObject({
+      title: '革命',
+      strength: 'reversed',
+    });
     expect(daifugoNotice(after, after, play)).toBeNull();
     expect(daifugoNotice(null, after, [])).toBeNull();
     expect(daifugoNotice(before, after, [])).toBeNull();
@@ -103,8 +106,12 @@ describe('Daifugo presentation follows confirmed state', () => {
     expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
       '革命',
     );
+    render(after, [{ kind: 'daifugo.out', payload: { seat: 1, place: 1 } }], 25);
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
+      '革命',
+    );
     render(after, [{ kind: 'daifugo.pile-clear', payload: { reason: 'all-pass', seat: 1 } }], 3);
-    act(() => vi.advanceTimersByTime(1200));
+    act(() => vi.advanceTimersByTime(2900));
     expect(container.querySelector('[data-testid="daifugo-cut-in"]')).not.toBeNull();
     act(() => vi.advanceTimersByTime(150));
     expect(container.querySelector('[data-testid="daifugo-cut-in"]')).toBeNull();
@@ -116,7 +123,12 @@ describe('Daifugo presentation follows confirmed state', () => {
       ...play,
       { kind: 'daifugo.out', payload: { seat: 0, place: 1 } },
     ]);
-    expect(notice).toMatchObject({ title: '革命', impact: 'major', actor: 'あなた' });
+    expect(notice).toMatchObject({
+      title: '革命',
+      impact: 'major',
+      actor: 'あなた',
+      strength: 'normal',
+    });
     expect(notice?.detail).toContain('重なって通常順');
     expect(notice?.extra).toContain('11バック');
     expect(daifugoNotice(after, { ...after, revolution: false }, play)?.title).toBe('革命返し');
@@ -135,6 +147,31 @@ describe('Daifugo presentation follows confirmed state', () => {
     expect(container.querySelector('[data-testid="daifugo-cut-in"]')).toBeNull();
     expect(container.textContent).toContain('直前：場が流れた');
     expect(daifugoNotice(null, { ...v, revolution: true }, [])).toBeNull();
+  });
+  it('replaces a revolution with its counter and clears it for a new round', () => {
+    const before = view();
+    const after = { ...before, revolution: true };
+    const render = (v: typeof before, fx: FxEvent[], fxKey: number) =>
+      act(() => root.render(createElement(DaifugoPresentation, { view: v, fx, fxKey })));
+    render(before, [], 0);
+    render(after, play, 1);
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
+      '3 ＞ 2',
+    );
+    act(() => vi.advanceTimersByTime(3000));
+    render(before, play, 2);
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
+      '革命返し',
+    );
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).toContain(
+      '3 ＜ 2',
+    );
+    act(() => vi.advanceTimersByTime(1000));
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')).not.toBeNull();
+    render({ ...before, dealNumber: before.dealNumber + 1 }, [], 3);
+    expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).not.toContain(
+      '革命返し',
+    );
   });
   it('cancels pending presentation timers on unmount', () => {
     act(() =>
