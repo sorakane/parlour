@@ -43,7 +43,6 @@ import {
   useTableMenu,
 } from '../shell';
 import { DaifugoAvatar } from '@/components/DaifugoAvatar';
-import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { DaifugoPresentation } from './DaifugoPresentation';
 import { DaifugoRuleStatus } from './DaifugoRuleStatus';
 import visual from '@/styles/daifugoVisual.module.css';
@@ -368,7 +367,6 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                 .join('・')}
             </span>
           )}
-          <DaifugoMusicToggle />
           {view.decision === 'lead-or-follow' && (
             <>
               <button

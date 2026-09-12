@@ -64,6 +64,7 @@
     max(1.5rem, env(safe-area-inset-bottom));
 }
 .navigation {
+  padding-right: 3.5rem;
   display: flex;
   gap: 1.2rem;
   align-items: center;

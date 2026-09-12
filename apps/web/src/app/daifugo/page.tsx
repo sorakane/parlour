@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { daifugoConfig } from '@parlour/game-daifugo';
 import { DaifugoJokerSettings } from '@/components/setup/DaifugoJokerSettings';
 import { DaifugoPresets } from '@/components/setup/DaifugoPresets';
-import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { RuleSettings } from '@/components/settings/RuleSettings';
 import { BotDifficultyPicker, SeatPicker, SetupPanel, SetupActions } from '@/components/setup';
 import { DaifugoSetup } from '@/components/setup/DaifugoSetup';
@@ -76,9 +75,8 @@ export default function DaifugoSetupPage() {
         />
         <BotDifficultyPicker value={botTier} onChange={setBotTier} />
         <div className="flex flex-wrap items-center gap-3">
-          <DaifugoMusicToggle />
           <p className="text-sm text-dusk-200">
-            明るいポップBGM。画面を移っても続けて再生します。ON/OFFは保存されます。
+            BGMは右上の音符ボタンでON/OFF。画面を移っても続けて再生します。
           </p>
         </div>
       </SetupPanel>

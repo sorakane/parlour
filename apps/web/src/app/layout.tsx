@@ -4,6 +4,7 @@ import { Baloo_2, Nunito_Sans } from 'next/font/google';
 import { ComfortSync } from '@/components/ComfortSync';
 import { ColorModeSync } from '@/components/ColorModeSync';
 import { LocaleSync } from '@/components/LocaleSync';
+import { DaifugoMusicToggle } from '@/components/DaifugoMusicToggle';
 import { AudioDirector } from '@/components/AudioDirector';
 import { SceneStage } from '@/components/backgrounds/SceneStage';
 import { MenuShell } from '@/components/menu/MenuShell';
@@ -150,6 +151,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ColorModeSync />
         <LocaleSync />
         <AudioDirector />
+        <DaifugoMusicToggle />
         <PwaRegister />
         <Analytics />
       </body>

@@ -13,7 +13,7 @@ import { ScenePicker } from '@/components/backgrounds/ScenePicker';
 export function LobbyChrome({ daifugo = false }: { daifugo?: boolean }) {
   return (
     <>
-      <div className="chrome-ne fixed z-30 flex items-center gap-2">
+      <div className="chrome-ne fixed z-30 flex items-center gap-2" style={{ marginRight: 60 }}>
         <MainMenuMuteButton />
         <MainMenuLanguageButton />
       </div>
