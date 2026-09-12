@@ -16,8 +16,10 @@ export type DaifugoNotice = {
   actor?: string;
   extra?: string;
   strength?: 'reversed' | 'normal';
+  celebration?: 'daifugo';
 };
-export const cutInDuration = (notice: DaifugoNotice) => (notice.impact === 'major' ? 3600 : 1300);
+export const cutInDuration = (notice: DaifugoNotice) =>
+  notice.celebration === 'daifugo' ? 4200 : notice.impact === 'major' ? 3600 : 1300;
 const ROLES: Record<string, string> = {
   daifugo: '大富豪',
   vice: '富豪',
@@ -84,6 +86,22 @@ export function daifugoNotice(
   const revolution = labels.includes('革命') || labels.includes('革命返し');
   const back = labels.includes('11バック') || labels.includes('11バック解除');
   const lock = labels.includes('激縛り') || labels.includes('縛り');
+  const localFirst = fx.some(
+    (event) =>
+      event.kind === 'daifugo.out' &&
+      (event.payload as { seat?: number; place?: number }).seat === view.localSeat &&
+      (event.payload as { place?: number }).place === 1,
+  );
+  if (localFirst)
+    return {
+      title: '大富豪',
+      detail: '一番上がり！このゲームの頂点へ',
+      actor: 'あなた',
+      tone: 'rank',
+      impact: 'major',
+      celebration: 'daifugo',
+      extra: labels.filter((label) => label !== '場が流れた').join(' / '),
+    };
   if (revolution || back || lock || labels.includes('8切り') || labels.includes('スペ3返し')) {
     const suits = view.lockedSuits
       .map((x) => (({ S: '♠', H: '♥', D: '♦', C: '♣' }) as Record<string, string>)[x] ?? x)
@@ -226,6 +244,36 @@ export function DaifugoPresentation({
 }
 
 function CutIn({ notice }: { notice: DaifugoNotice }) {
+  if (notice.celebration === 'daifugo') {
+    return (
+      <div
+        className={cinematic.scene}
+        aria-hidden="true"
+        data-testid="daifugo-cut-in"
+        data-impact="major"
+        data-celebration="daifugo"
+        style={{ '--cut-in-duration': `${cutInDuration(notice)}ms` } as CSSProperties}
+      >
+        <div className={cinematic.burst} />
+        <div className={`${cinematic.panel} ${cinematic.victory}`}>
+          <span className={cinematic.victoryEcho}>01</span>
+          <svg
+            className={cinematic.crown}
+            viewBox="0 0 100 64"
+            width="72"
+            height="46"
+            fill="currentColor"
+          >
+            <path d="M8 16 30 31 50 3 70 31 92 16 83 50H17ZM18 55H82V63H18Z" />
+          </svg>
+          <small className={cinematic.actor}>あなたが 1位で上がり</small>
+          <strong className={`${cinematic.title} ${cinematic.victoryTitle}`}>大富豪</strong>
+          <p className={cinematic.detail}>{notice.detail}</p>
+          {notice.extra && <span className={cinematic.extra}>同時発動：{notice.extra}</span>}
+        </div>
+      </div>
+    );
+  }
   if (notice.impact === 'major') {
     return (
       <div

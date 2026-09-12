@@ -141,7 +141,7 @@ describe('Daifugo presentation follows confirmed state', () => {
     const after = { ...before, revolution: true, jackBack: true };
     const notice = daifugoNotice(before, after, [
       ...play,
-      { kind: 'daifugo.out', payload: { seat: 0, place: 1 } },
+      { kind: 'daifugo.out', payload: { seat: 1, place: 1 } },
     ]);
     expect(notice).toMatchObject({
       title: '革命',
@@ -192,6 +192,39 @@ describe('Daifugo presentation follows confirmed state', () => {
     expect(container.querySelector('[data-testid="daifugo-cut-in"]')?.textContent).not.toContain(
       '革命返し',
     );
+  });
+  it('celebrates only the local first finisher and survives later rank updates', () => {
+    const v = view();
+    const out = [{ kind: 'daifugo.out', payload: { seat: v.localSeat, place: 1 } }];
+    const render = (fx: FxEvent[], fxKey: number) =>
+      act(() => root.render(createElement(DaifugoPresentation, { view: v, fx, fxKey })));
+    render([], 0);
+    render(out, 1);
+    expect(container.querySelector('[data-celebration="daifugo"]')?.textContent).toContain(
+      '大富豪',
+    );
+    act(() => vi.advanceTimersByTime(1500));
+    render([{ kind: 'daifugo.out', payload: { seat: 1, place: 2 } }], 2);
+    render([{ kind: 'daifugo.role', payload: { seat: v.localSeat, role: 'daifugo' } }], 3);
+    act(() => vi.advanceTimersByTime(2600));
+    expect(container.querySelector('[data-celebration="daifugo"]')).not.toBeNull();
+    act(() => vi.advanceTimersByTime(150));
+    expect(container.querySelector('[data-celebration="daifugo"]')).toBeNull();
+    render([], 3);
+    expect(container.querySelector('[data-celebration="daifugo"]')).toBeNull();
+    expect(
+      daifugoNotice(v, v, [{ kind: 'daifugo.out', payload: { seat: 1, place: 1 } }])?.celebration,
+    ).toBeUndefined();
+    expect(
+      daifugoNotice(v, v, [{ kind: 'daifugo.out', payload: { seat: v.localSeat, place: 2 } }])
+        ?.celebration,
+    ).toBeUndefined();
+    expect(daifugoNotice(null, v, [])?.celebration).toBeUndefined();
+    expect(daifugoNotice(v, { ...v, revolution: true }, [...play, ...out])).toMatchObject({
+      title: '大富豪',
+      celebration: 'daifugo',
+      extra: '革命',
+    });
   });
   it('cancels pending presentation timers on unmount', () => {
     act(() =>
