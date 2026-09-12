@@ -45,6 +45,15 @@ afterEach(() => {
 });
 
 describe('MatchRivalry', () => {
+  it('uses Japanese records and the game portraits for Daifugo without changing totals', () => {
+    render({ ...DUEL, game: 'daifugo', duel: false });
+    expect(text('match-rivalry')).toContain('今回 · 7ゲーム');
+    expect(text('match-rivalry')).toContain('あなたから見た勝敗');
+    expect(text('rivalry-row-friend:gf')).toContain('4勝 3敗');
+    expect(text('rivalry-row-friend:gf')).toContain('通算 12勝 8敗 1分');
+    expect(container.querySelector('[data-daifugo-avatar="plum"]')).not.toBeNull();
+  });
+
   it('leads with the sitting scoreline and who is ahead', () => {
     render(DUEL);
     expect(text('match-rivalry')).toContain('This sitting · 7 games');

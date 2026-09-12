@@ -1,5 +1,7 @@
 'use client';
 
+import { DaifugoAvatar } from '@/components/DaifugoAvatar';
+import daifugo from '@/styles/daifugoNotices.module.css';
 import { AvatarBadge } from '@/components/AvatarBadge';
 import { scoreline, type Rivalry, type RivalStanding, type Tally } from '@/lib/match/rivalry';
 import styles from '@/styles/rivalry.module.css';
@@ -18,6 +20,7 @@ export function MatchRivalry({
   youName?: string;
   youAvatarId?: string;
 }) {
+  if (rivalry.game === 'daifugo') return <DaifugoRivalry rivalry={rivalry} />;
   const sitting = rivalry.sittingGames > 1;
   const heading = sitting ? `This sitting · ${rivalry.sittingGames} games` : 'Where you stand';
 
@@ -111,4 +114,35 @@ function allTimeLine(standing: RivalStanding): string {
   const { allTime } = standing;
   const matches = `${allTime.games} ${allTime.games === 1 ? 'match' : 'matches'}`;
   return `${scoreline(allTime)} vs ${standing.name} · ${matches}`;
+}
+
+function DaifugoRivalry({ rivalry }: { rivalry: Rivalry }) {
+  const sitting = rivalry.sittingGames > 1;
+  const record = (tally: Tally) =>
+    `${tally.wins}勝 ${tally.losses}敗${tally.ties ? ` ${tally.ties}分` : ''}`;
+  return (
+    <section className={daifugo.rivalry} aria-label="相手別の対戦成績" data-testid="match-rivalry">
+      <header className={daifugo.heading}>
+        <h2>相手別の対戦成績</h2>
+        <span>{sitting ? `今回 · ${rivalry.sittingGames}ゲーム` : '通算成績'}</span>
+      </header>
+      <p className={daifugo.legend}>あなたから見た勝敗</p>
+      <ul className={daifugo.rows}>
+        {rivalry.standings.map((standing) => (
+          <li
+            className={daifugo.row}
+            key={standing.key}
+            data-testid={`rivalry-row-${standing.key}`}
+          >
+            <DaifugoAvatar avatarId={standing.avatarId} size={40} />
+            <span className={daifugo.name}>{standing.name}</span>
+            <div className={daifugo.record}>
+              <strong>{record(sitting ? standing.sitting : standing.allTime)}</strong>
+              {sitting && <small>通算 {record(standing.allTime)}</small>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }

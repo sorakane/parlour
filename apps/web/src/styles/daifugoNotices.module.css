@@ -1,0 +1,150 @@
+.notices {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top));
+  left: max(0.75rem, env(safe-area-inset-left));
+  width: min(calc(100vw - 5.5rem), 30rem);
+  z-index: 80;
+  display: grid;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+.notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #fffaf3;
+  border-left: 5px solid #df0024;
+  background: #111112;
+  color: #fffaf3;
+  box-shadow: 4px 4px 0 #000;
+  text-align: left;
+}
+.mark {
+  color: #fffaf3;
+  font-size: 1rem;
+}
+.message {
+  flex: 1;
+  min-width: 4rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-weight: 800;
+}
+.detail {
+  color: #c9c4bc;
+  font-weight: 400;
+}
+.refresh,
+.dismiss {
+  pointer-events: auto;
+  min-height: 44px;
+  border-radius: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.refresh {
+  border: 1px solid #df0024;
+  padding: 0.4rem 0.6rem;
+  background: #df0024;
+  color: #fffaf3;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.dismiss {
+  width: 44px;
+  border: 1px solid #777;
+  background: #111112;
+  color: #fffaf3;
+  font-size: 1.35rem;
+}
+.refresh:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.refresh:focus-visible,
+.dismiss:focus-visible {
+  outline: 2px solid #fffaf3;
+  outline-offset: 3px;
+}
+.rivalry {
+  width: 100%;
+  margin-top: 1.5rem;
+  border-top: 4px solid #df0024;
+  padding-top: 0.8rem;
+  background: #111112;
+  color: #fffaf3;
+  text-align: left;
+}
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  align-items: baseline;
+}
+.heading h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+}
+.heading span,
+.legend {
+  font-size: 0.7rem;
+  color: #c9c4bc;
+}
+.legend {
+  margin: 0.4rem 0 0.75rem;
+}
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.8rem 0;
+  border-top: 1px solid #777;
+}
+.row:last-child {
+  border-bottom: 1px solid #777;
+}
+.name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.record {
+  display: grid;
+  gap: 0.25rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.record strong {
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+.record small {
+  font-size: 0.65rem;
+  color: #c9c4bc;
+}
+@media (max-width: 360px) {
+  .notice {
+    gap: 0.35rem;
+    padding-inline: 0.45rem;
+  }
+  .notice .mark {
+    display: none;
+  }
+  .record strong {
+    font-size: 0.95rem;
+  }
+  .row {
+    gap: 0.5rem;
+  }
+}

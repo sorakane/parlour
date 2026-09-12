@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import styles from '@/styles/daifugoNotices.module.css';
 import { useT } from '@/lib/i18n';
 import { isTauriRuntime, syncAppViewportHeight } from '@/lib/pwa';
 
@@ -29,6 +30,8 @@ const SAFE_ACTIVATION_MESSAGE = { type: 'SKIP_WAITING', safeReload: true } as co
 export function PwaRegister() {
   const t = useT();
   const pathname = usePathname();
+  const daifugo =
+    pathname === '/' || pathname?.startsWith('/daifugo') || pathname?.startsWith('/match-end');
   const [online, setOnline] = useState(true);
   const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
   const [applyingUpdate, setApplyingUpdate] = useState(false);
@@ -169,52 +172,41 @@ export function PwaRegister() {
   if (online && !waitingWorker) return null;
 
   return (
-    <aside
-      aria-live="polite"
-      aria-atomic="true"
-      className="pointer-events-none fixed left-[max(0.75rem,env(safe-area-inset-left))] top-[max(0.75rem,env(safe-area-inset-top))] z-[80] flex w-[min(calc(100vw-5.5rem),30rem)] flex-col gap-2"
-    >
+    <aside aria-live="polite" aria-atomic="true" className={styles.notices}>
       {!online ? (
-        <div
-          role="status"
-          data-testid="pwa-offline-status"
-          className="panel-soft flex items-center gap-3 rounded-full px-4 py-2.5 text-left shadow-xl"
-        >
-          <span aria-hidden="true" className="text-lg text-hearth-200">
+        <div role="status" data-testid="pwa-offline-status" className={styles.notice}>
+          <span aria-hidden="true" className={styles.mark}>
             ◌
           </span>
-          <p className="min-w-0 flex-1 text-sm font-semibold text-dusk-50">
-            {t('pwa.offline')}{' '}
-            <span className="font-normal text-dusk-200">· {t('pwa.offlineSolo')}</span>
+          <p className={styles.message}>
+            {t('pwa.offline')} <span className={styles.detail}>· {t('pwa.offlineSolo')}</span>
           </p>
         </div>
       ) : null}
 
       {waitingWorker ? (
-        <div
-          role="status"
-          data-testid="pwa-update-status"
-          className="panel-soft flex items-center gap-3 rounded-2xl px-4 py-3 text-left shadow-xl"
-        >
-          <span aria-hidden="true" className="text-xl text-hearth-200">
+        <div role="status" data-testid="pwa-update-status" className={styles.notice}>
+          <span aria-hidden="true" className={styles.mark}>
             ✦
           </span>
-          <p className="min-w-0 flex-1 text-sm font-semibold text-dusk-50">
-            {t('pwa.updateReady')}
-          </p>
+          <p className={styles.message}>{daifugo ? '更新があります' : t('pwa.updateReady')}</p>
           <button
             type="button"
             onClick={applyUpdate}
             disabled={applyingUpdate}
-            className="pointer-events-auto rounded-full bg-hearth-300 px-3 py-1.5 font-display text-xs font-extrabold text-[#43200a] transition hover:bg-hearth-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hearth-100 disabled:opacity-60"
+            className={styles.refresh}
           >
-            {t(applyingUpdate ? 'pwa.refreshing' : 'pwa.refresh')}
+            {daifugo
+              ? applyingUpdate
+                ? '更新中…'
+                : '更新する'
+              : t(applyingUpdate ? 'pwa.refreshing' : 'pwa.refresh')}
           </button>
           <button
             type="button"
             onClick={() => setWaitingWorker(null)}
-            aria-label={t('pwa.dismissUpdate')}
-            className="pointer-events-auto grid h-9 w-9 place-items-center rounded-full text-xl text-dusk-200 transition hover:bg-dusk-800/60 hover:text-dusk-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hearth-100"
+            aria-label={daifugo ? '更新通知を閉じる' : t('pwa.dismissUpdate')}
+            className={styles.dismiss}
           >
             ×
           </button>
