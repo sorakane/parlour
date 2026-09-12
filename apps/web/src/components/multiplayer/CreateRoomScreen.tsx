@@ -120,7 +120,7 @@ function ActiveLobby({
         onClick={leave}
         className="pill-soft chrome-nw absolute z-30 text-sm font-bold text-dusk-100 hover:text-hearth-200"
       >
-        ← Leave
+        {snapshot.settings?.gameId === 'daifugo' ? '← 退出する' : '← Leave'}
       </Link>
       <LobbyChrome daifugo={snapshot.settings?.gameId === 'daifugo'} />
       <RoomLobby

@@ -86,6 +86,49 @@ describe('RoomLobby localisation', () => {
     container.remove();
   });
 
+  it('keeps Daifugo sharing Japanese even when the saved language is Spanish', async () => {
+    const snapshot = lobbySnapshot({ seats: 4 });
+    snapshot.settings = { ...snapshot.settings!, gameId: 'daifugo' };
+    const share = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', { configurable: true, value: share });
+    try {
+      await act(async () =>
+        root.render(
+          <RoomLobby
+            snapshot={snapshot}
+            code="ABCD"
+            shareUrl="https://example.test/ABCD"
+            seats={[{ seat: 0, name: 'Player', avatar: '◆', bot: false, connected: true }]}
+            isHost
+            onAddBot={() => {}}
+            onListedChange={() => {}}
+          />,
+        ),
+      );
+      for (const label of [
+        '部屋コード',
+        'リンクをコピー',
+        'CPUを追加',
+        '空席',
+        '準備完了',
+        'この部屋を公開する',
+        'あと3人',
+        'プレイヤー',
+      ])
+        expect(container.textContent).toContain(label);
+      const button = Array.from(container.querySelectorAll('button')).find(
+        (e) => e.textContent === '共有',
+      )!;
+      await act(async () => button.click());
+      expect(share).toHaveBeenCalledWith({
+        title: '大富豪で一緒に遊ぼう',
+        text: '大富豪の対戦に参加しよう！ 部屋コード：ABCD',
+        url: 'https://example.test/ABCD',
+      });
+    } finally {
+      Reflect.deleteProperty(navigator, 'share');
+    }
+  });
   it('translates sharing errors and bot labels with the rest of the lobby', async () => {
     await act(async () =>
       root.render(

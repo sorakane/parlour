@@ -249,8 +249,8 @@ export const CREATE_SCREENS: Readonly<Record<MultiplayerGameId, CreateScreen>> =
   },
   daifugo: {
     backHref: '/daifugo',
-    backLabel: 'Back to Daifugo',
-    loading: 'Setting the ladder…',
+    backLabel: '大富豪に戻る',
+    loading: '部屋を準備中…',
     botGlyph: '♛',
     humanGlyph: '◆',
     hydrate: useDaifugoSetupStore,
@@ -260,8 +260,8 @@ export const CREATE_SCREENS: Readonly<Record<MultiplayerGameId, CreateScreen>> =
     },
     blurb: (capacity) => (
       <>
-        This {capacity}-seat ladder starts when every chair fills. Share the code with{' '}
-        {capacity - 1} friends — the table seats up to eight.
+        {capacity}人そろうと対戦を始められます。あと{capacity - 1}
+        人に部屋コードやリンクを共有してください。空席にはCPUを追加することもできます。
       </>
     ),
   },

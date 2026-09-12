@@ -117,8 +117,8 @@ const AS_SHIPPED: Record<
   },
   daifugo: {
     backHref: '/daifugo',
-    backLabel: 'Back to Daifugo',
-    loading: 'Setting the ladder…',
+    backLabel: '大富豪に戻る',
+    loading: '部屋を準備中…',
     botGlyph: '♛',
     humanGlyph: '◆',
     waitsForStorage: true,

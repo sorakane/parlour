@@ -4,6 +4,7 @@ import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { useState } from 'react';
 import support from '@/styles/daifugoSupport.module.css';
 import type { MultiplayerRoomSnapshot } from '@/app/_multiplayer/roomSession';
+import { japaneseRoomCopy } from '@/lib/daifugo/room-copy';
 import { useT } from '@/lib/i18n';
 
 export type LobbySeat = {
@@ -41,7 +42,9 @@ export function RoomLobby({
   onAddBot,
   onListedChange,
 }: RoomLobbyProps) {
-  const t = useT();
+  const baseT = useT();
+  const daifugo = snapshot.settings?.gameId === 'daifugo';
+  const t = daifugo ? japaneseRoomCopy(baseT) : baseT;
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [starting, setStarting] = useState(false);
   const occupied = new Map(seats.map((seat) => [seat.seat, seat]));
@@ -154,7 +157,7 @@ export function RoomLobby({
                     </span>
                   )}
                   <strong className="mt-2 font-display shortscape:mt-0.5 shortscape:text-sm">
-                    {player.name}
+                    {daifugo && player.name === 'Player' ? 'プレイヤー' : player.name}
                     {player.bot ? ` (${t('room.bot')})` : ''}
                   </strong>
                   <span className="text-xs text-dusk-200">

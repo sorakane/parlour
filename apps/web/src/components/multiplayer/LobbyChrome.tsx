@@ -11,6 +11,7 @@ import { ScenePicker } from '@/components/backgrounds/ScenePicker';
  * Leave link owns the top-left), and the scene picker keeps its bottom-left.
  */
 export function LobbyChrome({ daifugo = false }: { daifugo?: boolean }) {
+  if (daifugo) return null;
   return (
     <>
       <div className="chrome-ne fixed z-30 flex items-center gap-2" style={{ marginRight: 60 }}>

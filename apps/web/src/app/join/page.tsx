@@ -1,5 +1,6 @@
 'use client';
 
+import { japaneseRoomCopy } from '@/lib/daifugo/room-copy';
 import { useT } from '@/lib/i18n';
 
 import Link from 'next/link';
@@ -209,8 +210,9 @@ function GuestLobby({
   session: MultiplayerRoomSession;
   onLeave: () => void;
 }) {
-  const t = useT();
+  const baseT = useT();
   const snapshot = useRoomSnapshot(session);
+  const t = snapshot?.settings?.gameId === 'daifugo' ? japaneseRoomCopy(baseT) : baseT;
   const room = snapshot?.room;
   if (!snapshot || !room) return null;
 
