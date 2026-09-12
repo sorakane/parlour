@@ -41,6 +41,26 @@ function fixture(cards = ['S8', 'H8'], overrides = {}) {
 }
 
 describe('current rule constraints', () => {
+  it('keeps the cause and required suit combination visible, including after reconnect', () => {
+    const single = renderToStaticMarkup(
+      createElement(DaifugoRuleStatus, { view: fixture(['C6'], { rankLocked: false }) }),
+    );
+    expect(single).toContain('同じ♣の組が続いたため');
+    expect(single).toContain('♣が必要・場が流れるまで');
+    const pair = renderToStaticMarkup(
+      createElement(DaifugoRuleStatus, { view: fixture(['S8', 'H8'], { rankLocked: false }) }),
+    );
+    expect(pair).toContain('の組が続いたため');
+    expect(pair).toContain('の組が必要・場が流れるまで');
+    const clear = renderToStaticMarkup(
+      createElement(DaifugoRuleStatus, {
+        view: fixture(['C6'], { lockedSuits: [], rankLocked: false }),
+      }),
+    );
+    expect(clear).not.toContain('続いたため');
+    expect(clear).not.toContain('が必要');
+  });
+
   it('distinguishes number-only lock and the combined club constraint', () => {
     const number = fixture(['C6'], { lockedSuits: [] });
     const html = renderToStaticMarkup(createElement(DaifugoRuleStatus, { view: number }));

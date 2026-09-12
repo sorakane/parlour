@@ -44,7 +44,7 @@ import {
 } from '../shell';
 import { DaifugoAvatar } from '@/components/DaifugoAvatar';
 import { DaifugoPresentation } from './DaifugoPresentation';
-import { DaifugoRuleStatus } from './DaifugoRuleStatus';
+import { DaifugoRuleStatus, suitLockRequirement } from './DaifugoRuleStatus';
 import visual from '@/styles/daifugoVisual.module.css';
 import tableStyles from '@/styles/table.module.css';
 import styles from '@/styles/president.module.css';
@@ -321,6 +321,17 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
                         : `この${selected.length}枚で出せます。「出す」で確定`
                       : '選択中の札だけでは出せません。強調された札を追加するか、選び直してください。'
                     : `出せる組 ${hints.length}通り · 赤線の札が候補`}
+                {view.lockedSuits.length > 0 && (
+                  <span className={daifugoStyles.lockReminder}>
+                    {view.rankLocked ? '激縛り' : 'マーク縛り'}：{suitLockRequirement(view)}
+                    {view.rankLocked ? '・数字も指定あり' : ''}
+                    {view.standing?.jokerOnly &&
+                    view.standing.cards.length === 1 &&
+                    view.rules.spadeThree
+                      ? '（スペ3返しは例外）'
+                      : ''}
+                  </span>
+                )}
               </span>
               <button
                 type="button"

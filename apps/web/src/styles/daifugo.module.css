@@ -39,6 +39,14 @@
   color: #fff2bc;
   text-shadow: 0 1px 4px #000;
 }
+.lockReminder {
+  display: block;
+  margin-top: 0.25rem;
+  padding-left: 0.4rem;
+  border-left: 3px solid #df0024;
+  font-weight: 800;
+  line-height: 1.5;
+}
 .choiceBanner {
   flex-basis: 100%;
   display: flex;

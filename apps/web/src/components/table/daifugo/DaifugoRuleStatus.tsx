@@ -11,6 +11,12 @@ const SUITS: Record<string, { symbol: string; name: string }> = {
 const RANKS: Record<number, string> = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A', 15: '2' };
 const rankLabel = (rank: number) => RANKS[rank] ?? String(rank);
 
+export function suitLockRequirement(view: DaifugoTableView): string | null {
+  if (!view.lockedSuits.length) return null;
+  const marks = view.lockedSuits.map((suit) => SUITS[suit]?.symbol ?? suit).join('＋');
+  return `${marks}${view.lockedSuits.length > 1 ? 'の組' : ''}が必要`;
+}
+
 /** Display-only projection of the engine's strict-lock rank step and run bounds. */
 export function nextLockedCards(view: DaifugoTableView): string | null {
   const { standing, rules } = view;
@@ -29,6 +35,7 @@ export function DaifugoRuleStatus({ view }: { view: DaifugoTableView }) {
   const isReversed = reversed(view);
   const locked = view.lockedSuits.length > 0;
   const next = nextLockedCards(view);
+  const lockMarks = view.lockedSuits.map((suit) => SUITS[suit]?.symbol ?? suit).join('＋');
   const jokerOnTable = view.standing?.jokerOnly && view.standing.cards.length === 1;
   const spadeReturn = jokerOnTable && view.rules.spadeThree;
   return (
@@ -66,11 +73,8 @@ export function DaifugoRuleStatus({ view }: { view: DaifugoTableView }) {
               ))
             : '縛りなし'}
         </strong>
-        <small>
-          {locked
-            ? view.lockedSuits.map((suit) => SUITS[suit]?.name ?? suit).join('・')
-            : 'どのマークでもOK'}
-        </small>
+        <small>{locked ? `同じ${lockMarks}の組が続いたため` : 'どのマークでもOK'}</small>
+        {locked && <small>{suitLockRequirement(view)}・場が流れるまで</small>}
       </div>
       <div className={s.ruleConstraint} data-active={Boolean(next || view.openingCard)}>
         <span className={s.ruleLabel}>
