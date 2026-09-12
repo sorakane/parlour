@@ -99,7 +99,7 @@ export const daifugoConfig = defineConfig<DaifugoRules>(
       group: '階段',
       kind: 'toggle',
       label: '階段（同じスートの連番）',
-      default: false,
+      default: true,
     },
     {
       key: 'stairsMin',

@@ -55,7 +55,7 @@ export const daifugoCatalog = defineGameCatalog({
       preset: 'classic',
       name: 'いつもの大富豪',
       tagline: 'まずはこの卓から',
-      description: '革命・8切り・11バック・縛り・スペ3返し。各ルールは自由に変更できます。',
+      description: '階段・革命・8切り・11バック・縛り・スペ3返し。各ルールは自由に変更できます。',
       facts: ['11ポイント', '交換あり', 'ジョーカー2枚'],
       accent: '#369b88',
       shade: '#18574e',

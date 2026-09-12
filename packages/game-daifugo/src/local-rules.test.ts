@@ -41,6 +41,19 @@ function move(state: DaifugoState, id: string, seat: number, cards?: string[]) {
 }
 const stairs = daifugoConfig.resolve({ stairs: true });
 
+describe('default stairs during revolution', () => {
+  it('accepts the photographed descending heart run and offers it as a legal choice', () => {
+    const s = fixture([['H6', 'H5', 'H4', 'H3'], ['C9'], ['D9'], ['S9']], {}, { revolution: true });
+    expect(s.rules.stairs).toBe(true);
+    expect(validateCombination(s, ['H5', 'H4', 'H3'])).toBe(true);
+    expect(playableSets(s, 0)).toContainEqual(['H3', 'H4', 'H5']);
+    expect(validateCombination({ ...s, revolution: false }, ['H3', 'H4', 'H5'])).toBe(true);
+    expect(
+      validateCombination({ ...s, rules: { ...s.rules, stairs: false } }, ['H5', 'H4', 'H3']),
+    ).not.toBe(true);
+  });
+});
+
 describe('same-suit runs', () => {
   it('requires a single suit, distinct ranks and the configured minimum', () => {
     expect(combination(['S3', 'S4', 'S5'], stairs)).toMatchObject({

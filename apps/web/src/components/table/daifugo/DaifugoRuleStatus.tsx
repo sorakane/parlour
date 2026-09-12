@@ -53,6 +53,7 @@ export function DaifugoRuleStatus({ view }: { view: DaifugoTableView }) {
           弱 {isReversed ? '2 → A → … → 3' : '3 → … → A → 2'} 強
         </span>
         <span className={s.ruleCauses}>
+          <span>{view.rules.stairs ? `階段ON（${view.rules.stairsMin}枚〜）` : '階段OFF'}</span>
           {view.revolution && <b>革命</b>}
           {view.jackBack && <b>11バック</b>}
           {view.revolution && view.jackBack ? (

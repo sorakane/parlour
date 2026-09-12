@@ -36,7 +36,7 @@ export function isDaifugoModeId(value: unknown): value is DaifugoModeId {
  */
 export function daifugoModeForRules(rules: DaifugoRules): DaifugoModeId {
   if (rules.seatOrder === 'rank-ascending') return 'rank-up';
-  if (rules.stairs || rules.sevenGive || rules.tenDiscard || rules.miyako) return 'local';
+  if (rules.stairsRevolution || rules.sevenGive || rules.tenDiscard || rules.miyako) return 'local';
   if (rules.targetPoints <= 7) return 'rapid';
   if (rules.targetPoints >= 21) return 'marathon';
   return 'classic';
