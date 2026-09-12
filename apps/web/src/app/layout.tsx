@@ -61,14 +61,14 @@ export const metadata: Metadata = {
     images: ['/social/daifugo-v1.png'],
   },
   category: 'games',
-  manifest: '/manifest.webmanifest',
+  manifest: '/manifest.webmanifest?v=daifugo-1',
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/daifugo-icon-v1.svg', type: 'image/svg+xml' },
+      { url: '/daifugo-icon-192-v1.png', type: 'image/png', sizes: '192x192' },
     ],
-    apple: [{ url: '/icon-192.png', type: 'image/png', sizes: '192x192' }],
-    shortcut: '/icon-192.png',
+    apple: [{ url: '/daifugo-icon-180-v1.png', type: 'image/png', sizes: '180x180' }],
+    shortcut: '/daifugo-icon-192-v1.png',
   },
   appleWebApp: { capable: true, title: '大富豪', statusBarStyle: 'black-translucent' },
   formatDetection: { telephone: false },
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
  * ever goes, the other has to be revisited in the same change.
  */
 export const viewport: Viewport = {
-  themeColor: '#152833',
+  themeColor: '#111112',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,

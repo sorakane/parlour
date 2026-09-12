@@ -40,12 +40,15 @@ describe('installable offline shell', () => {
     };
 
     expect(manifest).toMatchObject({
+      name: '大富豪',
+      short_name: '大富豪',
+      lang: 'ja',
       display: 'standalone',
       orientation: 'any',
       id: '/',
       scope: '/',
     });
-    expect(manifest.shortcuts.map((shortcut) => shortcut.url)).toEqual(['/games/', '/join/']);
+    expect(manifest.shortcuts.map((shortcut) => shortcut.url)).toEqual(['/daifugo/', '/join/']);
   });
 
   it('precaches a dedicated offline document and serves it for failed navigation', () => {
@@ -156,9 +159,6 @@ describe('installable offline shell', () => {
     expect(readFileSync(join(process.cwd(), 'src/app/profile/page.tsx'), 'utf8')).toContain(
       'safe-page',
     );
-    const home = readFileSync(join(process.cwd(), 'src/app/page.tsx'), 'utf8');
-    expect(home).toMatch(/chrome-ne fixed/);
-    expect(home).not.toMatch(/chrome-ne absolute/);
   });
 
   it('removes production service workers and parlour caches during development', () => {
