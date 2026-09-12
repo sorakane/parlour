@@ -63,6 +63,26 @@ describe('Daifugo presentation follows confirmed state', () => {
     expect(daifugoNotice(before, after, [])).toBeNull();
     expect(before.revolution).toBe(false);
   });
+  it('does not call a new-deal reset a counter, even when its first play arrives together', () => {
+    const previous = {
+      ...view(),
+      revolution: true,
+      jackBack: true,
+      rankLocked: true,
+      lockedSuits: ['C'],
+    };
+    const next = { ...view(), dealNumber: previous.dealNumber + 1 };
+    expect(daifugoNotice(previous, next, play)).toMatchObject({
+      title: `第${next.dealNumber}ゲーム`,
+      tone: 'rank',
+    });
+    expect(daifugoNotice(previous, next, [])?.title).toBe(`第${next.dealNumber}ゲーム`);
+    expect(daifugoNotice(previous, { ...next, revolution: true }, play)).toMatchObject({
+      title: '革命',
+      strength: 'reversed',
+    });
+    expect(daifugoNotice({ ...next, revolution: true }, next, play)?.title).toBe('革命返し');
+  });
   it('uses actual local-seat rank and gives final outcome priority over effects', () => {
     const v = { ...view(), localSeat: 2 };
     const roles = [

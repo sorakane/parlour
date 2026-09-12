@@ -2,10 +2,9 @@
 
 import { useRef, useState, type CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { orderedHand, type FxEvent } from '@parlour/engine';
+import { type FxEvent } from '@parlour/engine';
 import { type FxCue } from '@/lib/table/fx-motion';
 import {
-  daifugoCatalog,
   DAIFUGO_DECK,
   orderOf,
   MAX_PLAY_SIZE,
@@ -16,6 +15,7 @@ import {
 import { PRESIDENT_SFX_PACK } from '@/lib/audio/sfx';
 import { useMatchTension } from '@/lib/audio/tension';
 import { DAIFUGO_MATCH_PACE_MS } from '@/lib/daifugo/modes';
+import { orderDaifugoVisibleHand } from '@/lib/daifugo/hand-order';
 import { daifugoHints, matchingHintCards, sameHandSet } from '@/lib/daifugo/hints';
 import { isValidLocalSet, type DaifugoTableView } from '@/lib/daifugo/view';
 import { useProfileStore } from '@/stores/profile';
@@ -154,9 +154,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
     decision: view?.decision ?? null,
     standingRank: view?.standing?.rank ?? null,
     pileSize: view ? view.pile.reduce((sum, set) => sum + set.cards.length, 0) : null,
-    hand: view
-      ? orderedHand(deal.visibleCards(view.hand, view.localSeat), daifugoCatalog.handOrder)
-      : [],
+    hand: view ? orderDaifugoVisibleHand(deal.visibleCards(view.hand, view.localSeat), view) : [],
     scores: view ? Object.fromEntries(view.players.map((p) => [p.seat, p.score])) : {},
   }));
 
@@ -585,10 +583,7 @@ function LocalHand({
   jokerAs: JokerAssignments;
   deal: DealPresentation;
 }) {
-  const plannedHand = orderedHand(
-    deal.visibleCards(view.hand, view.localSeat),
-    daifugoCatalog.handOrder,
-  );
+  const plannedHand = orderDaifugoVisibleHand(deal.visibleCards(view.hand, view.localSeat), view);
   const visibleHand = useAdmittedHand(plannedHand);
   const exchanging =
     view.decision === 'give' || view.decision === 'return' || view.decision?.startsWith('effect-');

@@ -233,6 +233,23 @@ describe('joker declarations and tribute selection', () => {
       daifugoGame.flow.legalMovesFor!(session.state, session.phase, 0),
     );
   }
+  it('reorders the rendered hand when strength reverses and restores it on the next deal', () => {
+    const initial = jokerView();
+    const render = (view: typeof initial, fxKey: number) =>
+      act(() => root.render(createElement(DaifugoTableScreen, { view, fx: [], fxKey })));
+    const cards = () =>
+      Array.from(container.querySelectorAll('[data-hand-card]')).map((e) =>
+        e.getAttribute('data-card-id'),
+      );
+    render(initial, 1);
+    expect(cards()).toEqual(['C4', 'H1', 'S2', 'J0']);
+    render({ ...initial, revolution: true }, 2);
+    expect(cards()).toEqual(['S2', 'H1', 'C4', 'J0']);
+    render({ ...initial, revolution: true, jackBack: true }, 3);
+    expect(cards()).toEqual(['C4', 'H1', 'S2', 'J0']);
+    render({ ...initial, dealNumber: initial.dealNumber + 1 }, 4);
+    expect(cards()).toEqual(['C4', 'H1', 'S2', 'J0']);
+  });
   it('offers the extra pass only when no legal set exists and the player can act', () => {
     const playable = jokerView();
     const blocked = {

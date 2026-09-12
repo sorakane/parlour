@@ -42,17 +42,22 @@ export function daifugoNotice(
     fx.find((event) => event.kind === kind)?.payload as Record<string, unknown> | undefined;
   if (view.phaseLabel === 'マッチ終了')
     return { title: '決着', detail: '最終結果へ', tone: 'rank' };
+  // The new deal resets temporary rule state. Its first play may arrive in the
+  // same observed batch, so compare it with a fresh baseline, never the old deal.
+  const before =
+    previous && previous.dealNumber !== view.dealNumber
+      ? { ...previous, revolution: false, jackBack: false, rankLocked: false, lockedSuits: [] }
+      : previous;
   const labels: string[] = [];
-  if (previous && fx.some((event) => event.kind === 'daifugo.set')) {
-    if (previous.revolution !== view.revolution) labels.push(view.revolution ? '革命' : '革命返し');
-    if (previous.jackBack !== view.jackBack)
-      labels.push(view.jackBack ? '11バック' : '11バック解除');
+  if (before && fx.some((event) => event.kind === 'daifugo.set')) {
+    if (before.revolution !== view.revolution) labels.push(view.revolution ? '革命' : '革命返し');
+    if (before.jackBack !== view.jackBack) labels.push(view.jackBack ? '11バック' : '11バック解除');
     if (
       view.rankLocked &&
-      (!previous.rankLocked || (!previous.lockedSuits.length && view.lockedSuits.length))
+      (!before.rankLocked || (!before.lockedSuits.length && view.lockedSuits.length))
     )
       labels.push(view.lockedSuits.length ? '激縛り' : '数縛り');
-    else if (!previous.lockedSuits.length && view.lockedSuits.length) labels.push('縛り');
+    else if (!before.lockedSuits.length && view.lockedSuits.length) labels.push('縛り');
   }
   if (
     payload('daifugo.set') &&
