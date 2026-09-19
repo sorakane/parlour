@@ -38,6 +38,7 @@ import {
   type RoomAnnouncement,
   type RoomSignaling,
 } from '@/lib/multiplayer/NostrSignaling';
+import { HttpRoomRelay, httpRoomsEnabled } from '@/lib/multiplayer/HttpRoomRelay';
 import { LISTING_REFRESH_MS } from '@/lib/multiplayer/RoomDirectory';
 import {
   createDealNonce,
@@ -431,7 +432,10 @@ export class MultiplayerRoomSession {
     this.update({ connection: 'connecting' });
     const verdict = validateRoomCode(code);
     if (!verdict.ok) throw new Error('Room codes use four unambiguous letters or digits');
-    const signaling = this.dependencies.signaling ?? injectedSignaling() ?? new NostrSignaling();
+    const signaling =
+      this.dependencies.signaling ??
+      injectedSignaling() ??
+      (httpRoomsEnabled() ? new HttpRoomRelay() : new NostrSignaling());
     let announcement: RoomAnnouncement | null = null;
     try {
       announcement = await signaling.resolve(verdict.code, expectedHost);
@@ -2115,7 +2119,11 @@ export class MultiplayerRoomSession {
       profileId: this.profile.profileId,
       profileName: this.profile.name,
       profileAvatarId: this.profile.avatarId,
-      signaling: signaling ?? this.dependencies.signaling ?? injectedSignaling() ?? undefined,
+      signaling:
+        signaling ??
+        this.dependencies.signaling ??
+        injectedSignaling() ??
+        (httpRoomsEnabled() ? new HttpRoomRelay() : undefined),
       peerConnection: this.dependencies.peerConnection,
       heartbeatIntervalMs: this.dependencies.heartbeatIntervalMs,
       heartbeatTimeoutMs: this.dependencies.heartbeatTimeoutMs,

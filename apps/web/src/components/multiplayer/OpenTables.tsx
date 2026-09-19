@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { browseHttpRooms, httpRoomsEnabled } from '@/lib/multiplayer/HttpRoomRelay';
 import { useLocalizedGames } from '@/lib/i18n/gameContent';
 import { useT } from '@/lib/i18n';
 import {
@@ -45,7 +46,11 @@ function useHermeticPage(): boolean {
   );
 }
 
-export function OpenTables({ onPick, browse = browseOpenTables, disabled }: OpenTablesProps) {
+export function OpenTables({
+  onPick,
+  browse = httpRoomsEnabled() ? browseHttpRooms : browseOpenTables,
+  disabled,
+}: OpenTablesProps) {
   const t = useT();
   const games = useLocalizedGames();
   const hermetic = useHermeticPage();

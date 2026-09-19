@@ -1,6 +1,15 @@
 import { interpolate, type MessageKey, type MessageValues, type Translator } from '@/lib/i18n';
 
 const messages: Partial<Record<MessageKey, string>> = {
+  'join.heading': '部屋に参加する',
+  'join.hint': '友だちから届いた4文字の部屋コードを入力してください。',
+  'join.codeLabel': '部屋コード（{total}文字中{entered}文字）',
+  'join.knocking': '接続中…',
+  'join.submit': '部屋に参加する',
+  'join.connecting': '部屋のサーバーに接続して、席を確認しています…',
+  'join.unreachable':
+    '部屋 {code} に接続できませんでした。コードと通信状況を確認して、もう一度お試しください。',
+  'join.unreachableGeneric': '部屋に接続できませんでした。もう一度お試しください。',
   'room.codeLabel': '部屋コード',
   'room.addBot': 'CPUを追加',
   'room.lobbyClosed': '主催者が部屋を閉じました。',

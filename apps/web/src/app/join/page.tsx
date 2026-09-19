@@ -1,6 +1,7 @@
 'use client';
 
 import { japaneseRoomCopy } from '@/lib/daifugo/room-copy';
+import { RoomConnectionTimeout, waitForSeat } from '@/lib/multiplayer/waitForSeat';
 import { useT } from '@/lib/i18n';
 
 import Link from 'next/link';
@@ -48,7 +49,7 @@ function useRoomSnapshot(session: MultiplayerRoomSession | null) {
 }
 
 export default function JoinPage() {
-  const t = useT();
+  const t = japaneseRoomCopy(useT());
   const name = useProfileStore((state) => state.name);
   const avatarId = useProfileStore((state) => state.avatarId);
   const linkCode = useSyncExternalStore(subscribeNoop, readLinkCode, () => '');
@@ -79,9 +80,14 @@ export default function JoinPage() {
       try {
         await next.join(code, expectedHost);
         activateMultiplayerSession(next);
+        await waitForSeat(next);
       } catch (caught) {
+        next.close();
+        if (getActiveMultiplayerSession() === next) clearActiveMultiplayerSession();
         setError(
-          caught instanceof Error ? t('join.unreachable', { code }) : t('join.unreachableGeneric'),
+          caught instanceof RoomConnectionTimeout
+            ? '部屋との通信を確立できませんでした。主催者が部屋を開いたままか確認し、もう一度お試しください。通信が不安定な場合は、SafariやChromeでリンクを開き直してください。'
+            : t('join.unreachable', { code }),
         );
         setRoomSession(null);
       } finally {
@@ -273,7 +279,7 @@ function JoinStatus({
   session: MultiplayerRoomSession | null;
   fallbackError: string | null;
 }) {
-  const t = useT();
+  const t = japaneseRoomCopy(useT());
   const snapshot = useRoomSnapshot(session);
   const message = fallbackError ?? snapshot?.error;
   return (

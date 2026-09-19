@@ -22,6 +22,7 @@ import {
 import { canPublishListings, type RoomListingPublisher } from './RoomDirectory';
 import { validateEmote } from './emotes';
 import { DEFAULT_ICE_SERVERS } from './iceServers';
+import { isRoomRelay } from './RoomRelay';
 import { DuplicateActionError, MoveRefusedError } from './EngineAuthority';
 import {
   dispatchWireData,
@@ -89,6 +90,10 @@ export class P2PTransport implements Transport {
   private readonly randomBytes: (length: number) => Uint8Array;
   private readonly peerConnection: (configuration: RTCConfiguration) => RTCPeerConnection;
   private readonly links = new Map<string, PeerLink>();
+  private readonly relayPeers = new Set<string>();
+  private readonly pendingDealMessages = new Map<string, Map<string, DealMessage>>();
+  private lastDealCommit?: Extract<DealMessage, { type: 'deal.commit' }>;
+  private relayOnline = true;
   private readonly profiles = new Map<string, PlayerProfile>();
   private readonly eventListeners = new Set<(event: AppliedPacket) => void>();
   private readonly snapshotListeners = new Set<(notification: SnapshotNotification) => void>();
@@ -132,7 +137,8 @@ export class P2PTransport implements Transport {
       resolveRoomShareOrigin(window.location.origin, process.env.NEXT_PUBLIC_PARLOUR_SHARE_ORIGIN);
     this.now = options.now ?? (() => Date.now());
     this.heartbeatIntervalMs = options.heartbeatIntervalMs ?? HEARTBEAT_INTERVAL_MS;
-    this.heartbeatTimeoutMs = options.heartbeatTimeoutMs ?? HEARTBEAT_TIMEOUT_MS;
+    this.heartbeatTimeoutMs =
+      options.heartbeatTimeoutMs ?? (isRoomRelay(this.signaling) ? 20_000 : HEARTBEAT_TIMEOUT_MS);
     this.randomBytes =
       options.randomBytes ??
       ((length) => {
@@ -293,6 +299,8 @@ export class P2PTransport implements Transport {
   /** Broadcasts this seat's shuffle commitment or the share behind it. */
   sendDeal(message: DealMessage): void {
     this.assertReady();
+    if (message.type === 'deal.commit') this.lastDealCommit = message;
+    if (message.type === 'deal.reveal' && this.lastDealCommit) this.broadcast(this.lastDealCommit);
     this.broadcast(message);
   }
 
@@ -402,9 +410,37 @@ export class P2PTransport implements Transport {
     this.roomCode = code;
     this.resilience = new MultiplayerState(this.signaling.publicKey, hostId);
     this.resilience.seePeer(this.signaling.publicKey, this.now());
-    this.signalSubscription = this.signaling.subscribe(code, (sender, signal) => {
-      void this.receiveSignal(sender, signal);
-    });
+    if (isRoomRelay(this.signaling)) {
+      this.signalSubscription = this.signaling.subscribeMessages(
+        code,
+        async (sender, message) => {
+          this.relayPeers.add(sender);
+          try {
+            await this.receiveWire(sender, message);
+          } catch (error) {
+            this.emitPresence({
+              kind: 'error',
+              message:
+                error instanceof Error ? error.message : '通信データを確認できませんでした。',
+            });
+          }
+        },
+        (connected) => {
+          if (connected && !this.relayOnline) {
+            for (const peer of this.relayPeers) this.resilience?.seePeer(peer, this.now());
+          }
+          this.relayOnline = connected;
+          this.emitPresence({
+            kind: 'connection',
+            state: connected ? 'connected' : 'reconnecting',
+          });
+        },
+      );
+    } else {
+      this.signalSubscription = this.signaling.subscribe(code, (sender, signal) => {
+        void this.receiveSignal(sender, signal);
+      });
+    }
     this.heartbeatTimer = setInterval(() => this.heartbeat(), this.heartbeatIntervalMs);
   }
 
@@ -449,6 +485,12 @@ export class P2PTransport implements Transport {
   }
 
   private async connect(peerId: string, initiator: boolean): Promise<void> {
+    if (isRoomRelay(this.signaling)) {
+      if (peerId === this.signaling.publicKey || this.relayPeers.has(peerId)) return;
+      this.relayPeers.add(peerId);
+      this.sendTo(peerId, { type: 'hello', profile: this.profile });
+      return;
+    }
     if (peerId === this.signaling.publicKey || this.links.has(peerId)) return;
     const link = this.createLink(peerId);
     if (!initiator) return;
@@ -635,7 +677,16 @@ export class P2PTransport implements Transport {
         // Attributed to the seat the mesh says is speaking. A peer with no seat
         // has nothing to contribute to the deal, so it is simply ignored.
         const seat = this.seatForPeer(peerId);
-        if (seat === null) return;
+        if (seat === null) {
+          // The host's membership packet and another peer's shuffle share can
+          // arrive on different HTTP polls. Attribute only after seating.
+          if (this.pendingDealMessages.size < 64 || this.pendingDealMessages.has(peerId)) {
+            const pending = this.pendingDealMessages.get(peerId) ?? new Map<string, DealMessage>();
+            pending.set(message.type, message);
+            this.pendingDealMessages.set(peerId, pending);
+          }
+          return;
+        }
         for (const listener of this.dealListeners) listener(seat, message);
         return;
       }
@@ -905,6 +956,7 @@ export class P2PTransport implements Transport {
 
   private heartbeat(): void {
     if (!this.resilience) return;
+    if (!this.relayOnline) return;
     this.broadcast({
       type: 'heartbeat',
       sentAt: this.now(),
@@ -1007,6 +1059,18 @@ export class P2PTransport implements Transport {
         });
       }
     }
+    this.flushPendingDealMessages();
+  }
+
+  private flushPendingDealMessages(): void {
+    for (const [peerId, messages] of this.pendingDealMessages) {
+      const seat = this.seatForPeer(peerId);
+      if (seat === null) continue;
+      this.pendingDealMessages.delete(peerId);
+      for (const message of messages.values()) {
+        for (const listener of this.dealListeners) listener(seat, message);
+      }
+    }
   }
 
   private profileFor(peerId: string, profileId: string): PlayerProfile {
@@ -1028,12 +1092,18 @@ export class P2PTransport implements Transport {
   }
 
   private sendTo(peerId: string, message: WireMessage): void {
+    if (isRoomRelay(this.signaling)) {
+      this.signaling.sendMessage(this.roomCode!, peerId, message);
+      return;
+    }
     const channel = this.links.get(peerId)?.channel;
     if (channel?.readyState === 'open') channel.send(JSON.stringify(message));
   }
 
   private broadcast(message: WireMessage): void {
-    for (const peerId of this.links.keys()) this.sendTo(peerId, message);
+    for (const peerId of isRoomRelay(this.signaling) ? this.relayPeers : this.links.keys()) {
+      this.sendTo(peerId, message);
+    }
   }
 
   private emitEvent(event: AppliedPacket): void {
