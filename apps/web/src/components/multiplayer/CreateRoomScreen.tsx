@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { DaifugoRoomSetup } from './DaifugoRoomSetup';
 import { LobbyChrome } from '@/components/multiplayer/LobbyChrome';
 import { RoomLobby } from '@/components/multiplayer/RoomLobby';
 import { HostRoomMatch } from '@/lib/games/RoomGameTable';
@@ -30,6 +31,7 @@ export function CreateRoomScreen({ gameId }: { gameId: MultiplayerGameId }) {
   const name = useProfileStore((state) => state.name);
   const avatarId = useProfileStore((state) => state.avatarId);
   const ready = usePersistHydrated(screen.hydrate);
+  const [roomSeats, setRoomSeats] = useState<number | null>(null);
   const sessionRef = useRef<MultiplayerRoomSession | null>(null);
   // A live room this profile already hosts is adopted, not replaced: a
   // walkover's "play again" reopens the room as a lobby and routes back
@@ -56,21 +58,24 @@ export function CreateRoomScreen({ gameId }: { gameId: MultiplayerGameId }) {
       sessionRef.current = session;
       return;
     }
-    if (!ready || sessionRef.current) return;
+    if (!ready || sessionRef.current || (gameId === 'daifugo' && roomSeats === null)) return;
     const next = new MultiplayerRoomSession(multiplayerProfile(name, avatarId));
     sessionRef.current = next;
     setSession(next);
     const { seats, config } = screen.room();
     void next
-      .create({ gameId, seats, config })
+      .create({ gameId, seats: gameId === 'daifugo' ? roomSeats! : seats, config })
       .then(() => activateMultiplayerSession(next))
       .catch(() => undefined);
     // `screen` is a stable module constant and the room is read once inside,
     // which is why the rule values are not dependencies here. Each old page
     // listed its own — and then guarded the body so a change could never open a
     // second room, so the dependency never did anything but re-run a no-op.
-  }, [avatarId, gameId, name, ready, screen, session]);
+  }, [avatarId, gameId, name, ready, roomSeats, screen, session]);
 
+  if (gameId === 'daifugo' && !session && roomSeats === null) {
+    return <DaifugoRoomSetup onCreate={setRoomSeats} />;
+  }
   if (!ready || !session) return <CreateRoomLoading screen={screen} />;
   return (
     <HostRoomMatch session={session}>

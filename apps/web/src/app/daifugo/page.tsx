@@ -61,7 +61,7 @@ export default function DaifugoSetupPage() {
             },
             { label: '部屋コードで参加', tone: 'ghost', href: '/join' },
           ]}
-          note="友人対戦は最大8人。部屋コードを共有して参加できます。"
+          note="友人用の人数は、次の画面で4〜8人から選べます。"
         />
       }
     >
@@ -71,7 +71,7 @@ export default function DaifugoSetupPage() {
           options={SEAT_OPTIONS}
           value={seats}
           onChange={setSeats}
-          hint={`あなたとCPU ${seats - 1}人。友人対戦は「友人と部屋をつくる」から。`}
+          hint={`CPU対戦の人数：あなたとCPU ${seats - 1}人。友人用の人数は別に選べます。`}
         />
         <BotDifficultyPicker value={botTier} onChange={setBotTier} />
         <div className="flex flex-wrap items-center gap-3">

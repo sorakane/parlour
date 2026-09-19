@@ -30,6 +30,7 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
     }
     const [host, ...guests] = pages;
     await host.goto(`${base}/daifugo/create/`);
+    await host.getByRole('button', { name: '4人の部屋を作る', exact: true }).click();
     const code = await host.locator('h1').innerText({ timeout: 20000 });
     console.log('created', code);
     for (const guest of guests) {
