@@ -59,6 +59,7 @@ export type WireMessage =
   | { type: 'host.changed'; hostId: string; term?: number; snapshot: MigrationSnapshot }
   /** Host is tearing the lobby down — guests must leave, not elect a replacement. */
   | { type: 'room.closed' }
+  | { type: 'lobby.rules'; snapshot: MigrationSnapshot }
   | { type: 'sync.request'; expectedSeq: number }
   | { type: 'sync.snapshot'; snapshot: MigrationSnapshot }
   | { type: 'rematch.request' }
@@ -473,6 +474,7 @@ function isWireMessage(value: unknown): value is WireMessage {
         isBoundedInteger(value.expectedSeq, MAX_SEQUENCE)
       );
     case 'sync.snapshot':
+    case 'lobby.rules':
       return hasOnlyKeys(value, ['type', 'snapshot']) && isMigrationSnapshot(value.snapshot);
     case 'rematch.request':
       return hasOnlyKeys(value, ['type']);

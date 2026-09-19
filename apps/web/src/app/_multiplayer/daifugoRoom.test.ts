@@ -185,6 +185,57 @@ async function eventually(assertion: () => void, attempts = 500, delayMs = 10) {
 describe('Daifugo room recovery', () => {
   const opened: MultiplayerRoomSession[] = [];
   afterEach(() => opened.splice(0).forEach((peer) => peer.close()));
+  it('changes lobby rules without replacing the invite, syncs existing and late guests, and locks at start', async () => {
+    const broker = new MockSignalingBroker();
+    const rtc = new MockRtcNetwork();
+    const peers = [0, 1, 2, 3].map((seat) => {
+      const peer = new MultiplayerRoomSession(
+        { name: `P${seat}`, avatarId: 'ember', profileId: `rules-${seat}` },
+        {
+          signaling: broker.signaling(`rules-${seat}`),
+          peerConnection: rtc.factory(`rules-${seat}`),
+          seed: 42,
+        },
+      );
+      opened.push(peer);
+      return peer;
+    });
+    const host = peers[0]!;
+    const room = await host.create({
+      gameId: 'daifugo',
+      seats: 4,
+      config: daifugoConfig.resolve({ rankLock: false }),
+    });
+    await peers[1]!.join(room.code);
+    await eventually(() => expect(peers[1]!.getSnapshot().localSeat).toBe(1));
+    expect(() => peers[1]!.updateLobbyRules({ rankLock: true })).toThrow();
+    const updated = daifugoConfig.resolve({
+      rankLock: true,
+      suitLock: true,
+      stairsRevolution: true,
+    });
+    host.updateLobbyRules(updated);
+    await eventually(() => expect(peers[1]!.getSnapshot().settings?.config).toEqual(updated));
+    expect(peers[1]!.getSnapshot().stage).toBe('lobby');
+    expect(host.getSnapshot().room).toEqual(room);
+    for (const peer of peers.slice(2)) await peer.join(room.code);
+    await eventually(() => {
+      for (const peer of peers) {
+        expect(peer.getSnapshot().settings?.config).toEqual(updated);
+        expect(peer.getSnapshot().localSeat).not.toBeNull();
+      }
+    });
+    const starting = host.start();
+    expect(() => host.updateLobbyRules({ rankLock: false })).toThrow();
+    await starting;
+    await eventually(() => {
+      for (const peer of peers) {
+        expect(peer.getSnapshot().stage).toBe('table');
+        expect(peer.getSnapshot().session?.config).toMatchObject(updated);
+      }
+    });
+    expect(() => host.updateLobbyRules({ rankLock: false })).toThrow();
+  });
   it.each(['normal', 'give', 'discard'] as const)(
     'preserves %s state through guest reload and host migration',
     async (effectKind) => {

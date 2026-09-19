@@ -579,7 +579,32 @@ export class MultiplayerRoomSession {
     }, LISTING_DEBOUNCE_MS);
   }
 
+  private startingMatch = false;
+
+  updateLobbyRules(config: RuleValues): void {
+    const current = this.snapshot.settings;
+    if (
+      !this.snapshot.isHost ||
+      this.snapshot.stage !== 'lobby' ||
+      this.startingMatch ||
+      current?.gameId !== 'daifugo' ||
+      !this.authority ||
+      !this.transport ||
+      this.snapshot.connection === 'closed'
+    ) {
+      throw new Error('ルールを変更できるのは対戦開始前の主催者だけです。');
+    }
+    const settings = resolveRoomSettings({ ...current, config });
+    const runtime = createRoomRuntime(settings, this.seed, (seat, bot) =>
+      this.acceptSeatBot(seat, bot),
+    );
+    this.authority.importSnapshot(runtime.authority.exportSnapshot());
+    this.update({ settings, session: runtime.session });
+    this.transport.publishLobbyRules();
+  }
+
   async start(): Promise<void> {
+    if (this.startingMatch || this.snapshot.stage !== 'lobby') return;
     if (!this.snapshot.isHost) {
       const error = new Error('only the host can start the match');
       this.update({ error: startFault(error) });
@@ -594,6 +619,7 @@ export class MultiplayerRoomSession {
     // Off the list before the deal, not after: the row is an invitation to sit
     // down, and every chair is now taken by someone about to be dealt in.
     this.setListed(false);
+    this.startingMatch = true;
     try {
       if (this.snapshot.security.tier === 'veil') {
         // Veil is infrastructure, not a promise made to anyone: nothing in the
@@ -623,6 +649,8 @@ export class MultiplayerRoomSession {
     } catch (error) {
       this.update({ error: startFault(error) });
       throw error;
+    } finally {
+      this.startingMatch = false;
     }
   }
 
@@ -2114,8 +2142,13 @@ export class MultiplayerRoomSession {
       // The host published the opening position, so adopt it — and check the
       // deal inside it is the one the table's shares add up to.
       const imported = this.authority!.exportSnapshot();
+      if (notification.reason === 'lobby') {
+        this.update({ settings: imported.settings, session: this.authority!.getSession() });
+        return;
+      }
       const openDeal = imported.settings.security !== 'veil';
       this.update({
+        settings: imported.settings,
         session: this.presented(this.authority!.getSession()),
         fx: this.presentedFx(this.authority!.getSession().setupFx ?? []),
         fxKey: this.snapshot.fxKey + 1,

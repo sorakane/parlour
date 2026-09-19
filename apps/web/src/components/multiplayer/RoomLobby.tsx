@@ -1,6 +1,8 @@
 'use client';
 
 import { DaifugoAvatar } from '@/components/DaifugoAvatar';
+import type { RuleValues } from '@parlour/engine';
+import { DaifugoLobbyRules } from './DaifugoLobbyRules';
 import { useState } from 'react';
 import support from '@/styles/daifugoSupport.module.css';
 import type { MultiplayerRoomSnapshot } from '@/app/_multiplayer/roomSession';
@@ -27,6 +29,7 @@ type RoomLobbyProps = {
   seats: LobbySeat[];
   isHost: boolean;
   onStart?: () => void | Promise<void>;
+  onRulesChange?: (rules: RuleValues) => void;
   onAddBot?: (seat: number) => void;
   /** Host-only: put this table on the public open-table list, or take it off. */
   onListedChange?: (listed: boolean) => void;
@@ -39,6 +42,7 @@ export function RoomLobby({
   seats,
   isHost,
   onStart,
+  onRulesChange,
   onAddBot,
   onListedChange,
 }: RoomLobbyProps) {
@@ -186,6 +190,14 @@ export function RoomLobby({
           );
         })}
       </ol>
+
+      {daifugo && snapshot.settings && (
+        <DaifugoLobbyRules
+          config={snapshot.settings.config}
+          onChange={isHost ? onRulesChange : undefined}
+          disabled={starting}
+        />
+      )}
 
       {isHost && onListedChange && (
         <label

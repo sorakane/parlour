@@ -138,6 +138,7 @@ function ActiveLobby({
         }))}
         onListedChange={(listed) => session.setListed(listed)}
         onStart={() => session.start()}
+        onRulesChange={(rules) => session.updateLobbyRules(rules)}
       />
       {screen.blurb && (
         <p className="max-w-xl text-center text-sm text-dusk-100/80 shortscape:hidden">

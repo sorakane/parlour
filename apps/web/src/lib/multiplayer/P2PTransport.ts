@@ -343,6 +343,12 @@ export class P2PTransport implements Transport {
     this.broadcast({ type: 'sync.snapshot', snapshot: this.exportMigration() });
   }
 
+  publishLobbyRules(): void {
+    this.assertReady();
+    if (!this.isHost() || !this.lobbyHold) throw new Error('only a waiting host may change rules');
+    this.broadcast({ type: 'lobby.rules', snapshot: this.exportMigration() });
+  }
+
   publishRematch(): void {
     this.assertReady();
     if (!this.isHost()) throw new Error('only the host may publish a rematch');
@@ -590,8 +596,37 @@ export class P2PTransport implements Transport {
             reason: 'rejoin',
             snapshot: this.authority.exportSnapshot(),
           });
+        } else {
+          this.emitSnapshot({
+            kind: 'snapshot',
+            reason: 'lobby',
+            snapshot: this.authority.exportSnapshot(),
+          });
         }
         return;
+      case 'lobby.rules': {
+        if (peerId !== this.resilience?.hostId || this.isHost() || !this.lobbyHold) return;
+        const previous = this.authority.exportSnapshot();
+        const incoming = message.snapshot.replay;
+        if (
+          previous.settings.gameId !== 'daifugo' ||
+          incoming.settings.gameId !== previous.settings.gameId ||
+          incoming.settings.seats !== previous.settings.seats ||
+          incoming.settings.security !== previous.settings.security ||
+          incoming.seed !== previous.seed ||
+          previous.log.length > 0 ||
+          incoming.log.length > 0 ||
+          incoming.acceptedActions.length > 0
+        )
+          throw new Error('invalid lobby rule update');
+        await this.authority.importSnapshot(incoming);
+        this.emitSnapshot({
+          kind: 'snapshot',
+          reason: 'lobby',
+          snapshot: this.authority.exportSnapshot(),
+        });
+        return;
+      }
       case 'mesh.peers':
         await this.connectMesh(message.peers);
         return;

@@ -78,7 +78,7 @@ export type SnapshotNotification = {
    * `rejoin` — this peer came back to a match already in progress and was
    *   handed the running position in its welcome.
    */
-  reason: 'divergence' | 'opening' | 'rematch' | 'rejoin';
+  reason: 'divergence' | 'opening' | 'rematch' | 'rejoin' | 'lobby';
   snapshot: ReplaySnapshot;
 };
 
