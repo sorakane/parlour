@@ -6,7 +6,7 @@ const messages: Partial<Record<MessageKey, string>> = {
   'join.codeLabel': '部屋コード（{total}文字中{entered}文字）',
   'join.knocking': '接続中…',
   'join.submit': '部屋に参加する',
-  'join.connecting': '部屋のサーバーに接続して、席を確認しています…',
+  'join.connecting': '主催者と接続して、席を確認しています…',
   'join.unreachable':
     '部屋 {code} に接続できませんでした。コードと通信状況を確認して、もう一度お試しください。',
   'join.unreachableGeneric': '部屋に接続できませんでした。もう一度お試しください。',

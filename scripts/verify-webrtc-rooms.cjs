@@ -1,5 +1,6 @@
 const { chromium } = require('../apps/web/node_modules/@playwright/test');
 const assert = require('node:assert/strict');
+const forceRelay = process.env.ROOM_TEST_FORCE_RELAY === '1';
 const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$/, '');
 (async () => {
   const browser = await chromium.launch({ headless: true, channel: 'chrome' });
@@ -12,32 +13,60 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
     );
     const pages = [];
     for (const context of contexts) {
-      await context.addInitScript(() => {
-        window.RTCPeerConnection = class {
-          constructor() {
-            throw new Error('WebRTC must not be used');
+      await context.addInitScript((forceRelay) => {
+        const Native = window.RTCPeerConnection;
+        window.__testConnections = [];
+        window.RTCPeerConnection = class extends Native {
+          constructor(config) {
+            super(forceRelay ? { ...config, iceTransportPolicy: 'relay' } : config);
+            window.__testConnections.push(this);
           }
         };
-        window.WebSocket = class {
-          constructor() {
-            throw new Error('WebSocket must not be used');
-          }
-        };
-      });
+      }, forceRelay);
       const p = await context.newPage();
+      p.on('request', (request) => {
+        if (request.url().includes('chatgpt.site') || request.url().includes('/api/room-relay'))
+          errors.push('Unexpected Sites request');
+      });
       p.on('pageerror', (e) => errors.push(e.message));
       pages.push(p);
     }
     const [host, ...guests] = pages;
     await host.goto(`${base}/daifugo/create/`);
     await host.getByRole('button', { name: '4人の部屋を作る', exact: true }).click();
-    const code = await host.locator('h1').innerText({ timeout: 20000 });
+    const heading = host.getByRole('heading', {
+      name: /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/,
+      exact: true,
+    });
+    await heading.waitFor({ timeout: 45000 });
+    const code = await heading.innerText();
     console.log('created', code);
     for (const guest of guests) {
       await guest.goto(`${base}/join/?code=${code}`);
-      await guest.getByRole('heading', { name: code, exact: true }).waitFor({ timeout: 20000 });
+      await guest.waitForTimeout(1500);
+      const submit = guest.getByTestId('join-submit');
+      if ((await submit.count()) && (await submit.isEnabled())) await submit.click();
+      try {
+        await guest.getByRole('heading', { name: code, exact: true }).waitFor({ timeout: 60000 });
+      } catch (e) {
+        console.log(
+          'url/input/pcs',
+          guest.url(),
+          await guest.locator('input').inputValue(),
+          await guest.evaluate(() =>
+            window.__testConnections.map((p) => ({
+              state: p.connectionState,
+              ice: p.iceConnectionState,
+            })),
+          ),
+        );
+        console.log('join screen', await guest.locator('body').innerText());
+        console.log('host screen', await host.locator('body').innerText());
+        console.log(errors);
+        throw e;
+      }
     }
-    console.log('four players joined with WebRTC and WebSocket disabled');
+    console.log('four players joined over WebRTC');
     await host.getByRole('button', { name: 'ローカルルールを変更する' }).click();
     await host
       .getByRole('switch', { name: '数縛り（3→4なら次は5。マーク縛りと併用可）', exact: true })
@@ -52,6 +81,21 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
       );
     }
     console.log('rule changes synchronized');
+    for (const p of pages) {
+      const types = await p.evaluate(async () => {
+        const results = [];
+        for (const pc of window.__testConnections) {
+          const stats = await pc.getStats();
+          for (const item of stats.values())
+            if (item.type === 'candidate-pair' && item.state === 'succeeded' && item.nominated)
+              results.push(stats.get(item.localCandidateId)?.candidateType);
+        }
+        return results;
+      });
+      assert.ok(types.length > 0);
+      if (forceRelay) assert.ok(types.every((t) => t === 'relay'));
+      console.log('selected WebRTC paths', types);
+    }
     await host.getByTestId('start-match').click();
     try {
       for (const p of pages)

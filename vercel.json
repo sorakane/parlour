@@ -2,12 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "pnpm install",
-  "buildCommand": "NEXT_PUBLIC_DAIFUGO_ROOM_API=/api/room-relay pnpm --filter @parlour/web... build",
-  "outputDirectory": "apps/web/out",
-  "rewrites": [
-    {
-      "source": "/api/room-relay",
-      "destination": "https://daifugo-online.uminoyeah.chatgpt.site/api/room-relay"
-    }
-  ]
+  "buildCommand": "pnpm --filter @parlour/web... build",
+  "outputDirectory": "apps/web/out"
 }
