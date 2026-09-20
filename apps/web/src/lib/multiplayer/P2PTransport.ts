@@ -89,6 +89,8 @@ export class P2PTransport implements Transport {
   private readonly randomBytes: (length: number) => Uint8Array;
   private readonly peerConnection: (configuration: RTCConfiguration) => RTCPeerConnection;
   private readonly links = new Map<string, PeerLink>();
+  private readonly pendingDealMessages = new Map<string, Map<string, DealMessage>>();
+  private lastDealCommit?: Extract<DealMessage, { type: 'deal.commit' }>;
   private readonly profiles = new Map<string, PlayerProfile>();
   private readonly eventListeners = new Set<(event: AppliedPacket) => void>();
   private readonly snapshotListeners = new Set<(notification: SnapshotNotification) => void>();
@@ -293,6 +295,10 @@ export class P2PTransport implements Transport {
   /** Broadcasts this seat's shuffle commitment or the share behind it. */
   sendDeal(message: DealMessage): void {
     this.assertReady();
+    if (message.type === 'deal.commit') this.lastDealCommit = message;
+    // A peer may connect after the initial commitment broadcast. Repeat the
+    // same commitment before revealing; never choose a new commitment.
+    if (message.type === 'deal.reveal' && this.lastDealCommit) this.broadcast(this.lastDealCommit);
     this.broadcast(message);
   }
 
@@ -635,7 +641,16 @@ export class P2PTransport implements Transport {
         // Attributed to the seat the mesh says is speaking. A peer with no seat
         // has nothing to contribute to the deal, so it is simply ignored.
         const seat = this.seatForPeer(peerId);
-        if (seat === null) return;
+        if (seat === null) {
+          // Membership and peer data travel on different channels. Preserve
+          // bounded shuffle messages until the host has attributed the seat.
+          if (this.pendingDealMessages.size < 64 || this.pendingDealMessages.has(peerId)) {
+            const pending = this.pendingDealMessages.get(peerId) ?? new Map<string, DealMessage>();
+            pending.set(message.type, message);
+            this.pendingDealMessages.set(peerId, pending);
+          }
+          return;
+        }
         for (const listener of this.dealListeners) listener(seat, message);
         return;
       }
@@ -1005,6 +1020,18 @@ export class P2PTransport implements Transport {
           seat,
           profile: this.profileFor(occupant.peerId, occupant.profileId),
         });
+      }
+    }
+    this.flushPendingDealMessages();
+  }
+
+  private flushPendingDealMessages(): void {
+    for (const [peerId, messages] of this.pendingDealMessages) {
+      const seat = this.seatForPeer(peerId);
+      if (seat === null) continue;
+      this.pendingDealMessages.delete(peerId);
+      for (const message of messages.values()) {
+        for (const listener of this.dealListeners) listener(seat, message);
       }
     }
   }
