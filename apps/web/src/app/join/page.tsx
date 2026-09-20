@@ -18,7 +18,7 @@ import { OpenTables } from '@/components/multiplayer/OpenTables';
 import { RoomLobby } from '@/components/multiplayer/RoomLobby';
 import { RoomGameTable } from '@/lib/games/RoomGameTable';
 import { useProfileStore } from '@/stores/profile';
-import styles from '@/styles/join.module.css';
+import { RoomCodeInput } from '@/components/multiplayer/RoomCodeInput';
 import {
   activateMultiplayerSession,
   clearActiveMultiplayerSession,
@@ -59,7 +59,12 @@ export default function JoinPage() {
   const [roomSession, setRoomSession] = useState<MultiplayerRoomSession | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const code = typed ?? linkCode;
+  const inputCode = typed ?? linkCode;
+  const code = normalizeRoomCode(inputCode.normalize('NFKC'))
+    .split('')
+    .filter((character) => ROOM_CODE_ALPHABET.includes(character))
+    .join('')
+    .slice(0, ROOM_CODE_LENGTH);
   const snapshot = useRoomSnapshot(roomSession);
 
   const submit = useCallback(
@@ -104,13 +109,7 @@ export default function JoinPage() {
 
   const updateCode = useCallback((raw: string) => {
     setError(null);
-    setTyped(
-      normalizeRoomCode(raw)
-        .split('')
-        .filter((character) => ROOM_CODE_ALPHABET.includes(character))
-        .join('')
-        .slice(0, ROOM_CODE_LENGTH),
-    );
+    setTyped(raw);
   }, []);
 
   if (
@@ -151,27 +150,17 @@ export default function JoinPage() {
         <p className="mt-1 text-sm text-dusk-100/85">{t('join.hint')}</p>
       </div>
       <PlayerNameField disabled={checking} />
-      <input
-        type="text"
-        value={code}
-        onChange={(event) => updateCode(event.currentTarget.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && code.length === ROOM_CODE_LENGTH && !checking) {
+      <RoomCodeInput
+        value={inputCode}
+        onChange={updateCode}
+        onConfirm={() => {
+          if (code.length === ROOM_CODE_LENGTH) {
             void submit(code, typed === null ? linkHost || undefined : undefined);
           }
         }}
-        maxLength={ROOM_CODE_LENGTH}
-        inputMode="text"
-        enterKeyHint="go"
-        autoCapitalize="characters"
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
         autoFocus={!linkCode}
         disabled={checking}
-        data-filled={code.length > 0}
-        aria-label={t('join.codeLabel', { entered: code.length, total: ROOM_CODE_LENGTH })}
-        className={styles.codeInput}
+        label={t('join.codeLabel', { entered: code.length, total: ROOM_CODE_LENGTH })}
       />
       <JoinStatus session={roomSession} fallbackError={error} />
       <button
