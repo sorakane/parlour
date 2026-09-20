@@ -72,6 +72,8 @@ export interface RoomSignaling {
     code: string,
     callback: (senderPubkey: string, payload: SignalPayload) => void,
   ): { close(): void };
+  /** Reset network sockets after browser suspension; keep the peer identity. */
+  reconnect?(): void;
   /** Release every subscription and connection this peer opened. */
   close(): void;
 }
@@ -300,6 +302,10 @@ export class NostrSignaling implements RoomSignaling, RoomListingPublisher {
         },
       },
     );
+  }
+
+  reconnect(): void {
+    this.pool.close(this.relays);
   }
 
   close(): void {

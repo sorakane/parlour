@@ -4,8 +4,9 @@ import { japaneseRoomCopy } from '@/lib/daifugo/room-copy';
 import { RoomConnectionTimeout, waitForSeat } from '@/lib/multiplayer/waitForSeat';
 import { useT } from '@/lib/i18n';
 
+import { PlayerNameField } from '@/components/multiplayer/PlayerNameField';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 import {
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
@@ -58,13 +59,12 @@ export default function JoinPage() {
   const [roomSession, setRoomSession] = useState<MultiplayerRoomSession | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const autoTried = useRef(false);
   const code = typed ?? linkCode;
   const snapshot = useRoomSnapshot(roomSession);
 
   const submit = useCallback(
     async (code: string, expectedHost?: string) => {
-      if (checking) return;
+      if (checking || !name.trim()) return;
       const live = getActiveMultiplayerSession();
       if (live) {
         const snap = live.getSnapshot();
@@ -73,6 +73,11 @@ export default function JoinPage() {
           return;
         }
       }
+      const url = new URL(window.location.href);
+      url.searchParams.set('code', code);
+      if (expectedHost) url.searchParams.set('host', expectedHost);
+      else url.searchParams.delete('host');
+      window.history.replaceState(null, '', url);
       setChecking(true);
       setError(null);
       const next = new MultiplayerRoomSession(multiplayerProfile(name, avatarId));
@@ -80,7 +85,7 @@ export default function JoinPage() {
       try {
         await next.join(code, expectedHost);
         activateMultiplayerSession(next);
-        await waitForSeat(next);
+        await waitForSeat(next, 90_000);
       } catch (caught) {
         next.close();
         if (getActiveMultiplayerSession() === next) clearActiveMultiplayerSession();
@@ -96,12 +101,6 @@ export default function JoinPage() {
     },
     [avatarId, checking, name, t],
   );
-
-  useEffect(() => {
-    if (autoTried.current || !linkCode) return;
-    autoTried.current = true;
-    void submit(linkCode, linkHost || undefined);
-  }, [linkCode, linkHost, submit]);
 
   const updateCode = useCallback((raw: string) => {
     setError(null);
@@ -151,6 +150,7 @@ export default function JoinPage() {
         </h1>
         <p className="mt-1 text-sm text-dusk-100/85">{t('join.hint')}</p>
       </div>
+      <PlayerNameField disabled={checking} />
       <input
         type="text"
         value={code}
@@ -181,7 +181,7 @@ export default function JoinPage() {
         // suite that matched on the copy silently found nothing at all.
         data-testid="join-submit"
         onClick={() => void submit(code, typed === null ? linkHost || undefined : undefined)}
-        disabled={code.length !== ROOM_CODE_LENGTH || checking}
+        disabled={!name.trim() || code.length !== ROOM_CODE_LENGTH || checking}
         className="btn-fat w-64 text-lg"
       >
         {checking ? t('join.knocking') : t('join.submit')}
@@ -190,8 +190,11 @@ export default function JoinPage() {
       {/* Browsing sits under the code box rather than beside it: a code from a
           friend is still the ordinary way in, and the list is what you read
           when you have no code at all. */}
+      <p className="max-w-xl text-sm text-dusk-100/85">
+        主催者がSNSで共有中の場合は、ゲーム画面に戻るまでお待ちください。接続できない場合は、SafariやChromeでリンクを開き直してください。
+      </p>
       <OpenTables
-        disabled={checking}
+        disabled={checking || !name.trim()}
         onPick={(pickedCode, hostPubkey) => {
           setTyped(pickedCode);
           void submit(pickedCode, hostPubkey);

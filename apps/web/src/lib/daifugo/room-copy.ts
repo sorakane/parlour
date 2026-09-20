@@ -1,6 +1,15 @@
 import { interpolate, type MessageKey, type MessageValues, type Translator } from '@/lib/i18n';
 
 const messages: Partial<Record<MessageKey, string>> = {
+  'browse.seatsOpen_one': '空席{count}',
+  'browse.seatsOpen_other': '空席{count}',
+  'browse.heading': '公開中の部屋',
+  'browse.empty':
+    '現在、公開中の部屋はありません。友だちの部屋には、部屋コードか招待リンクで参加できます。',
+  'browse.searching': '公開中の部屋を探しています…',
+  'browse.hostedBy': '主催者：{host}',
+  'browse.strangersNote': '公開中の部屋には、知らない人も参加できます。',
+  'browse.openHands': '通常対戦',
   'join.heading': '部屋に参加する',
   'join.hint': '友だちから届いた4文字の部屋コードを入力してください。',
   'join.codeLabel': '部屋コード（{total}文字中{entered}文字）',

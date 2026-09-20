@@ -1,5 +1,7 @@
 'use client';
 
+import { PlayerNameField } from './PlayerNameField';
+import { useProfileStore } from '@/stores/profile';
 import Link from 'next/link';
 import { useState } from 'react';
 import { DAIFUGO_SEAT_OPTIONS } from '@/stores/daifugoSetup';
@@ -7,6 +9,7 @@ import visual from '@/styles/daifugoVisual.module.css';
 
 /** Online capacity is explicit and independent of the saved solo/CPU count. */
 export function DaifugoRoomSetup({ onCreate }: { onCreate: (seats: number) => void }) {
+  const name = useProfileStore((state) => state.name);
   const [seats, setSeats] = useState(4);
   return (
     <main className={`${visual.theme} min-h-dvh bg-[#111112] px-5 pb-10 pt-24`} lang="ja">
@@ -18,6 +21,7 @@ export function DaifugoRoomSetup({ onCreate }: { onCreate: (seats: number) => vo
           <p className="mb-2 text-sm font-bold tracking-widest">友人とオンライン対戦</p>
           <h1 className="text-3xl font-black sm:text-4xl">何人で遊びますか？</h1>
         </header>
+        <PlayerNameField />
         <fieldset>
           <legend className="mb-4 font-bold">あなたを含めた対戦人数</legend>
           <div className="flex flex-wrap gap-3">
@@ -42,6 +46,7 @@ export function DaifugoRoomSetup({ onCreate }: { onCreate: (seats: number) => vo
         </p>
         <button
           type="button"
+          disabled={!name.trim()}
           onClick={() => onCreate(seats)}
           className="btn-fat w-full text-xl"
           data-testid="confirm-room-capacity"

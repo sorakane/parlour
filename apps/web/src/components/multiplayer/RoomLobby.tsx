@@ -129,6 +129,12 @@ export function RoomLobby({
         </div>
       </div>
 
+      {daifugo && isHost && (
+        <p className="mt-3 text-sm text-dusk-100/85">
+          共有が終わったら、この画面に戻って友だちをお待ちください。タブは閉じずに残してください。
+        </p>
+      )}
+
       {copyState === 'error' && (
         <p className="mt-3 text-sm text-hearth-200" role="alert">
           {t('room.shareFailed', { url: shareUrl })}

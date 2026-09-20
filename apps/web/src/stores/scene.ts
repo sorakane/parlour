@@ -93,9 +93,6 @@ if (typeof window !== 'undefined') {
     } else {
       writeSceneCookie(useSceneStore.getState().sceneId);
     }
-    // Ask the browser not to evict our storage under pressure. Chromium
-    // grants this quietly for installed PWAs; elsewhere it is a harmless no.
-    void window.navigator.storage?.persist?.();
   } catch {
     /* private mode without storage — the session default stands */
   }

@@ -442,9 +442,10 @@ export class MultiplayerRoomSession {
       const knownSeats = this.snapshot.seats.filter(
         (seat) => seat.seat !== 0 && seat.seat !== assignedSeat,
       );
+      const knownHost = this.snapshot.seats.find((seat) => seat.seat === 0);
       const joinedSeats: MultiplayerSeat[] = [
-        {
-          name: 'Host',
+        knownHost ?? {
+          name: '主催者',
           avatarId: 'ember',
           profileId: room.hostId,
           seat: 0,

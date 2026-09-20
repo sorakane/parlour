@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useLocalizedGames } from '@/lib/i18n/gameContent';
+import { japaneseRoomCopy } from '@/lib/daifugo/room-copy';
 import { useT } from '@/lib/i18n';
 import {
   browseOpenTables,
@@ -46,7 +47,7 @@ function useHermeticPage(): boolean {
 }
 
 export function OpenTables({ onPick, browse = browseOpenTables, disabled }: OpenTablesProps) {
-  const t = useT();
+  const t = japaneseRoomCopy(useT());
   const games = useLocalizedGames();
   const hermetic = useHermeticPage();
   const [tables, setTables] = useState<readonly OpenTableListing[]>([]);

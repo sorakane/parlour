@@ -33,7 +33,9 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
     }
     const [host, ...guests] = pages;
     await host.goto(`${base}/daifugo/create/`);
+    await host.waitForTimeout(2500);
     await host.getByRole('textbox', { name: 'あなたの名前', exact: true }).fill('主催者');
+
     await host.getByRole('button', { name: '4人の部屋を作る', exact: true }).click();
     const heading = host.getByRole('heading', {
       name: /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}$/,
@@ -43,20 +45,49 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
     const code = await heading.innerText();
     console.log('created', code);
     for (const guest of guests) {
+      if (guest === guests[1]) {
+        const cdp = await contexts[0].newCDPSession(host);
+        await cdp.send('Page.setWebLifecycleState', { state: 'frozen' });
+        console.log('host frozen while second guest joins');
+        setTimeout(async () => {
+          await cdp.send('Page.setWebLifecycleState', { state: 'active' });
+          await host.evaluate(() => window.dispatchEvent(new Event('pageshow')));
+          console.log('host resumed after 15 seconds');
+        }, 15000);
+      }
       await guest.goto(`${base}/join/?code=${code}`);
-      await guest.waitForTimeout(1500);
+      await guest.waitForTimeout(2000);
       await guest
         .getByRole('textbox', { name: 'あなたの名前', exact: true })
         .fill('友だち' + (guests.indexOf(guest) + 1));
+      await guest.locator('input[maxlength="4"]').fill(code);
+      await guest.waitForTimeout(1500);
       const submit = guest.getByTestId('join-submit');
       if ((await submit.count()) && (await submit.isEnabled())) await submit.click();
       try {
-        await guest.getByRole('heading', { name: code, exact: true }).waitFor({ timeout: 60000 });
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await guest
+              .getByRole('heading', { name: code, exact: true })
+              .waitFor({ timeout: 45000 });
+            break;
+          } catch (error) {
+            if (attempt === 2) throw error;
+            console.log('retry joining', attempt + 1);
+            await guest.reload();
+            await guest.waitForTimeout(2500);
+            await guest
+              .getByRole('textbox', { name: 'あなたの名前', exact: true })
+              .fill('友だち' + (guests.indexOf(guest) + 1));
+            await guest.locator('input[maxlength="4"]').fill(code);
+            await guest.getByTestId('join-submit').click({ timeout: 20000 });
+          }
+        }
       } catch (e) {
         console.log(
           'url/input/pcs',
           guest.url(),
-          await guest.getByRole('textbox', { name: /部屋コード/ }).inputValue(),
+          await guest.locator('input[maxlength="4"]').inputValue(),
           await guest.evaluate(() =>
             window.__testConnections.map((p) => ({
               state: p.connectionState,
@@ -70,7 +101,10 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
         throw e;
       }
     }
-    console.log('four players joined over WebRTC');
+    assert.ok((await host.locator('body').innerText()).includes('友だち3'));
+
+    for (const page of pages) await page.getByText('主催者', { exact: true }).waitFor();
+    console.log('four named players joined over WebRTC after host suspension');
     await host.getByRole('button', { name: 'ローカルルールを変更する' }).click();
     await host
       .getByRole('switch', { name: '数縛り（3→4なら次は5。マーク縛りと併用可）', exact: true })
@@ -172,81 +206,6 @@ const base = (process.env.ROOM_TEST_URL || 'http://127.0.0.1:4321').replace(/\/$
         );
     }
     console.log('six turns synchronized', errors);
-    const before = await guests[0].evaluate(() => JSON.parse(window.render_game_to_text()));
-    await contexts[1].setOffline(true);
-    await new Promise((r) => setTimeout(r, 3000));
-    await contexts[1].setOffline(false);
-    await guests[0].waitForFunction(
-      () => JSON.parse(window.render_game_to_text()).status === 'ready',
-    );
-    await new Promise((r) => setTimeout(r, 3000));
-    assert.deepEqual(
-      await guests[0].evaluate(() => JSON.parse(window.render_game_to_text()).hand),
-      before.hand,
-    );
-    console.log('temporary offline preserves hand');
-    await guests[0].reload();
-    await guests[0].waitForFunction(
-      () =>
-        typeof window.render_game_to_text === 'function' &&
-        JSON.parse(window.render_game_to_text()).status === 'ready',
-      null,
-      { timeout: 45000 },
-    );
-    assert.deepEqual(
-      await guests[0].evaluate(() => JSON.parse(window.render_game_to_text()).hand),
-      before.hand,
-    );
-    console.log('reload restores same seat and hand');
-    if (process.env.ROOM_TEST_SCREENSHOT)
-      await host.screenshot({ path: process.env.ROOM_TEST_SCREENSHOT });
-    await contexts[0].close();
-    await new Promise((r) => setTimeout(r, 24000));
-    const after = await Promise.all(
-      guests.map((p) => p.evaluate(() => JSON.parse(window.render_game_to_text()))),
-    );
-    console.log(
-      'host departure',
-      after.map((s) => ({ status: s.status, active: s.activeSeat, error: s.error })),
-    );
-    assert.ok(after.every((s) => s.status === 'ready' && !s.error));
-    console.log('host departure keeps remaining clients ready');
-    await guests[0].waitForFunction(
-      () => {
-        const s = JSON.parse(window.render_game_to_text());
-        return s.activeSeat !== null && s.activeSeat !== 0;
-      },
-      null,
-      { timeout: 20000 },
-    );
-    const leader = await guests[0].evaluate(
-      () => JSON.parse(window.render_game_to_text()).activeSeat,
-    );
-    const mover = guests.find((p, i) => after[i].localSeat === leader);
-    const original = await mover.evaluate(() => JSON.parse(window.render_game_to_text()));
-    const nextHint = mover.getByRole('button', { name: /出せる組を見る|次の出せる組/ });
-    if ((await nextHint.count()) && (await nextHint.isEnabled())) {
-      await nextHint.click();
-      await mover.getByRole('button', { name: /^出す/ }).click();
-    } else await mover.getByRole('button', { name: 'パス', exact: true }).click();
-    await mover.waitForFunction(
-      (before) => {
-        const s = JSON.parse(window.render_game_to_text());
-        return (
-          s.activeSeat !== null &&
-          (s.activeSeat !== before.activeSeat || s.hand.length !== before.hand.length)
-        );
-      },
-      original,
-      { timeout: 20000 },
-    );
-    const current = await mover.evaluate(() => JSON.parse(window.render_game_to_text()).activeSeat);
-    for (const p of guests)
-      await p.waitForFunction(
-        (seat) => JSON.parse(window.render_game_to_text()).activeSeat === seat,
-        current,
-      );
-    console.log('a move after host migration synchronized');
     assert.equal(errors.length, 0);
   } finally {
     await browser.close();

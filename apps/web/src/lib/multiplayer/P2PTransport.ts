@@ -50,11 +50,14 @@ import type {
 /** How long to wait before redialling a peer whose connection died. */
 const REDIAL_DELAY_MS = 1_000;
 /** Redials before a peer is treated as genuinely gone rather than flaky. */
-const MAX_REDIALS = 3;
+const MAX_REDIALS = 8;
+const LOBBY_TIMEOUT_MS = 120_000;
+const CONNECT_TIMEOUT_MS = 10_000;
 
 type PeerLink = {
   pc: RTCPeerConnection;
   channel?: RTCDataChannel;
+  connectTimer?: ReturnType<typeof setTimeout>;
   pendingIce: RTCIceCandidateInit[];
   /** DataChannels are ordered, so async packet handling must stay ordered too. */
   inbox: Promise<void>;
@@ -72,6 +75,7 @@ type P2PTransportOptions = {
   now?: () => number;
   heartbeatIntervalMs?: number;
   heartbeatTimeoutMs?: number;
+  lobbyTimeoutMs?: number;
   randomBytes?: (length: number) => Uint8Array;
   peerConnection?: (configuration: RTCConfiguration) => RTCPeerConnection;
 };
@@ -86,6 +90,7 @@ export class P2PTransport implements Transport {
   private readonly now: () => number;
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
+  private readonly lobbyTimeoutMs: number;
   private readonly randomBytes: (length: number) => Uint8Array;
   private readonly peerConnection: (configuration: RTCConfiguration) => RTCPeerConnection;
   private readonly links = new Map<string, PeerLink>();
@@ -107,6 +112,12 @@ export class P2PTransport implements Transport {
   private resilience?: MultiplayerState;
   private roomCode?: string;
   private signalSubscription?: { close(): void };
+  private resumeGraceUntil = 0;
+  private lastResumeAt = -Infinity;
+  private readonly onVisible = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    this.resumeConnections();
+  };
   private heartbeatTimer?: ReturnType<typeof setInterval>;
   private lastEmoteAt = -Infinity;
   private pendingResync = false;
@@ -135,6 +146,7 @@ export class P2PTransport implements Transport {
     this.now = options.now ?? (() => Date.now());
     this.heartbeatIntervalMs = options.heartbeatIntervalMs ?? HEARTBEAT_INTERVAL_MS;
     this.heartbeatTimeoutMs = options.heartbeatTimeoutMs ?? HEARTBEAT_TIMEOUT_MS;
+    this.lobbyTimeoutMs = options.lobbyTimeoutMs ?? LOBBY_TIMEOUT_MS;
     this.randomBytes =
       options.randomBytes ??
       ((length) => {
@@ -394,11 +406,19 @@ export class P2PTransport implements Transport {
   close(): void {
     if (this.closed) return;
     this.closed = true;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pageshow', this.onVisible);
+      window.removeEventListener('online', this.onVisible);
+      document.removeEventListener('visibilitychange', this.onVisible);
+    }
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     for (const timer of this.redialTimers) clearTimeout(timer);
     this.redialTimers.clear();
     this.signalSubscription?.close();
-    for (const link of this.links.values()) link.pc.close();
+    for (const link of this.links.values()) {
+      clearTimeout(link.connectTimer);
+      link.pc.close();
+    }
     this.links.clear();
     this.signaling.close();
     this.emitPresence({ kind: 'connection', state: 'closed' });
@@ -409,9 +429,41 @@ export class P2PTransport implements Transport {
     this.resilience = new MultiplayerState(this.signaling.publicKey, hostId);
     this.resilience.seePeer(this.signaling.publicKey, this.now());
     this.signalSubscription = this.signaling.subscribe(code, (sender, signal) => {
-      void this.receiveSignal(sender, signal);
+      void this.receiveSignal(sender, signal).catch(() => undefined);
     });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pageshow', this.onVisible);
+      window.addEventListener('online', this.onVisible);
+      document.addEventListener('visibilitychange', this.onVisible);
+    }
     this.heartbeatTimer = setInterval(() => this.heartbeat(), this.heartbeatIntervalMs);
+  }
+
+  /** Reopen signaling after the OS suspends a background browser. */
+  private resumeConnections(): void {
+    if (this.closed || !this.roomCode || !this.resilience) return;
+    const now = this.now();
+    if (now - this.lastResumeAt < 1_000) return;
+    this.lastResumeAt = now;
+    this.resumeGraceUntil = now + 15_000;
+    this.signalSubscription?.close();
+    this.signaling.reconnect?.();
+    this.signalSubscription = this.signaling.subscribe(this.roomCode, (peer, signal) => {
+      void this.receiveSignal(peer, signal).catch(() => undefined);
+    });
+    this.redials.clear();
+    for (const [peer, link] of this.links) {
+      if (link.pc.connectionState !== 'connected') this.retire(peer, link.pc);
+    }
+    if (!this.isHost() && !this.links.has(this.resilience.hostId)) {
+      void this.connect(this.resilience.hostId, true).catch(() => undefined);
+    }
+    if (this.isHost()) {
+      void this.signaling
+        .announce(this.roomCode, this.authority.exportSnapshot().settings)
+        .catch(() => undefined);
+    }
+    this.heartbeat();
   }
 
   private handle(code: string): RoomHandle {
@@ -439,6 +491,7 @@ export class P2PTransport implements Transport {
     const link = this.links.get(peerId);
     if (!link || link.pc !== pc) return;
     this.links.delete(peerId);
+    clearTimeout(link.connectTimer);
     link.pc.close();
 
     const spent = this.redials.get(peerId) ?? 0;
@@ -468,6 +521,9 @@ export class P2PTransport implements Transport {
     const pc = this.peerConnection({ iceServers: this.iceServers });
     const link: PeerLink = { pc, pendingIce: [], inbox: Promise.resolve() };
     this.links.set(peerId, link);
+    link.connectTimer = setTimeout(() => {
+      if (link.channel?.readyState !== 'open') this.retire(peerId, pc);
+    }, CONNECT_TIMEOUT_MS);
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         void this.signaling.send(this.roomCode!, peerId, {
@@ -507,6 +563,7 @@ export class P2PTransport implements Transport {
     channel.onopen = () => {
       // A peer that reaches an open channel has spent none of its redials: the
       // cap is there for a peer that has left, not one on a flaky phone.
+      clearTimeout(link.connectTimer);
       this.redials.delete(peerId);
       this.resilience?.seePeer(peerId, this.now());
       this.sendTo(peerId, { type: 'hello', profile: this.profile });
@@ -927,11 +984,17 @@ export class P2PTransport implements Transport {
         ? { hostId: this.resilience.hostId, term: this.resilience.electionTerm }
         : {}),
     });
+    // A paused browser must hear peers again before expiring them on return.
+    if (
+      this.now() < this.resumeGraceUntil ||
+      (typeof document !== 'undefined' && document.visibilityState === 'hidden')
+    )
+      return;
     const before = new Map(this.resilience.seats);
     const beforePresence = this.resilience.exportPresence();
     const election = this.resilience.expireAndElect(
       this.now(),
-      this.heartbeatTimeoutMs,
+      this.lobbyHold ? this.lobbyTimeoutMs : this.heartbeatTimeoutMs,
       this.lobbyHold,
     );
     if (election.changed && this.lobbyHold) {

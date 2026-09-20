@@ -223,6 +223,7 @@ describe('Daifugo room recovery', () => {
       for (const peer of peers) {
         expect(peer.getSnapshot().settings?.config).toEqual(updated);
         expect(peer.getSnapshot().localSeat).not.toBeNull();
+        expect(peer.getSnapshot().seats.find((seat) => seat.seat === 0)?.name).toBe('P0');
       }
     });
     const starting = host.start();

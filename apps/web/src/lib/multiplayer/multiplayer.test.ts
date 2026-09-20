@@ -727,3 +727,83 @@ describe('shuffle messages arriving before membership', () => {
     transport.close();
   });
 });
+
+describe('mobile lobby recovery', () => {
+  it('keeps the room during a short host suspension and resubscribes on return', () => {
+    let now = 0;
+    const signaling = new NostrSignaling({
+      relays: [],
+      pool: {
+        ensureRelay: vi.fn(),
+        publish: vi.fn(() => []),
+        querySync: vi.fn(async () => []),
+        subscribeMany: vi.fn(() => ({ close() {} })),
+        close: vi.fn(),
+      },
+    });
+    const reconnect = vi.spyOn(signaling, 'reconnect');
+    const transport = new P2PTransport({
+      authority: counterAuthority(),
+      profileId: 'guest',
+      signaling,
+      now: () => now,
+    });
+    const harness = transport as unknown as {
+      resilience: MultiplayerState;
+      startRoom(code: string, hostId: string): void;
+      heartbeat(): void;
+      resumeConnections(): void;
+      connect: ReturnType<typeof vi.fn>;
+    };
+    harness.connect = vi.fn(async () => undefined);
+    const events = vi.fn();
+    transport.onPresence(events);
+    harness.startRoom('AB2Z', 'host');
+    harness.resilience.seePeer('host', now);
+    now = 30_000;
+    harness.heartbeat();
+    expect(harness.resilience.hostId).toBe('host');
+    expect(events).not.toHaveBeenCalledWith({ kind: 'room.closed' });
+    harness.resumeConnections();
+    expect(reconnect).toHaveBeenCalledOnce();
+    expect(harness.connect).toHaveBeenCalledWith('host', true);
+    transport.close();
+  });
+
+  it('redials a connection whose initial offer never receives an answer', async () => {
+    vi.useFakeTimers();
+    const signaling = new NostrSignaling({
+      relays: [],
+      pool: {
+        ensureRelay: vi.fn(),
+        publish: vi.fn(() => []),
+        querySync: vi.fn(async () => []),
+        subscribeMany: vi.fn(() => ({ close() {} })),
+        close: vi.fn(),
+      },
+    });
+    const close = vi.fn();
+    const transport = new P2PTransport({
+      authority: counterAuthority(),
+      profileId: 'guest',
+      signaling,
+      peerConnection: () => ({ close, connectionState: 'new' }) as unknown as RTCPeerConnection,
+    });
+    const harness = transport as unknown as {
+      startRoom(code: string, hostId: string): void;
+      createLink(peer: string): void;
+      connect: ReturnType<typeof vi.fn>;
+    };
+    try {
+      harness.connect = vi.fn(async () => undefined);
+      harness.startRoom('AB2Z', 'host');
+      harness.createLink('host');
+      await vi.advanceTimersByTimeAsync(11_001);
+      expect(close).toHaveBeenCalledOnce();
+      expect(harness.connect).toHaveBeenCalledWith('host', true);
+    } finally {
+      transport.close();
+      vi.useRealTimers();
+    }
+  });
+});

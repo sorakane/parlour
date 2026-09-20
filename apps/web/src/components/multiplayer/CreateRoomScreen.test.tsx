@@ -1,3 +1,4 @@
+import { useProfileStore } from '@/stores/profile';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
@@ -19,7 +20,10 @@ vi.mock('@/app/_multiplayer/roomSession', () => ({
     create = create;
   },
 }));
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  useProfileStore.getState().setName('');
+});
 
 it.each([4, 6])(
   'creates an explicitly selected %i-seat room even when saved CPU settings say 8',
@@ -39,6 +43,9 @@ it.each([4, 6])(
         '[data-testid="confirm-room-capacity"]',
       )!;
       expect(submit.textContent).toBe(`${seats}人の部屋を作る`);
+      expect(submit.disabled).toBe(true);
+      await act(async () => useProfileStore.getState().setName('主催者'));
+      expect(submit.disabled).toBe(false);
       await act(async () => submit.click());
       expect(create).toHaveBeenCalledExactlyOnceWith({ gameId: 'daifugo', seats, config: {} });
     } finally {
