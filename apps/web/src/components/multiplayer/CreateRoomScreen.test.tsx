@@ -43,8 +43,7 @@ it.each([4, 6])(
         '[data-testid="confirm-room-capacity"]',
       )!;
       expect(submit.textContent).toBe(`${seats}人の部屋を作る`);
-      expect(submit.disabled).toBe(true);
-      await act(async () => useProfileStore.getState().setName('主催者'));
+      expect(useProfileStore.getState().name).toBe('');
       expect(submit.disabled).toBe(false);
       await act(async () => submit.click());
       expect(create).toHaveBeenCalledExactlyOnceWith({ gameId: 'daifugo', seats, config: {} });

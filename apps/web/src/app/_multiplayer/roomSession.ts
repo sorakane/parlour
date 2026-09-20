@@ -2473,7 +2473,7 @@ export function multiplayerProfile(name: string, avatarId: string): MultiplayerP
     profileId = crypto.randomUUID();
     window.localStorage.setItem(storageKey, profileId);
   }
-  return { name: name || 'Player', avatarId, profileId };
+  return { name: name.trim() || 'プレイヤー', avatarId, profileId };
 }
 
 /**

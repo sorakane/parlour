@@ -69,7 +69,7 @@ export default function JoinPage() {
 
   const submit = useCallback(
     async (code: string, expectedHost?: string) => {
-      if (checking || !name.trim()) return;
+      if (checking) return;
       const live = getActiveMultiplayerSession();
       if (live) {
         const snap = live.getSnapshot();
@@ -149,7 +149,6 @@ export default function JoinPage() {
         </h1>
         <p className="mt-1 text-sm text-dusk-100/85">{t('join.hint')}</p>
       </div>
-      <PlayerNameField disabled={checking} />
       <RoomCodeInput
         value={inputCode}
         onChange={updateCode}
@@ -162,6 +161,7 @@ export default function JoinPage() {
         disabled={checking}
         label={t('join.codeLabel', { entered: code.length, total: ROOM_CODE_LENGTH })}
       />
+      <PlayerNameField disabled={checking} />
       <JoinStatus session={roomSession} fallbackError={error} />
       <button
         type="button"
@@ -170,7 +170,7 @@ export default function JoinPage() {
         // suite that matched on the copy silently found nothing at all.
         data-testid="join-submit"
         onClick={() => void submit(code, typed === null ? linkHost || undefined : undefined)}
-        disabled={!name.trim() || code.length !== ROOM_CODE_LENGTH || checking}
+        disabled={code.length !== ROOM_CODE_LENGTH || checking}
         className="btn-fat w-64 text-lg"
       >
         {checking ? t('join.knocking') : t('join.submit')}
@@ -183,7 +183,7 @@ export default function JoinPage() {
         主催者がSNSで共有中の場合は、ゲーム画面に戻るまでお待ちください。接続できない場合は、SafariやChromeでリンクを開き直してください。
       </p>
       <OpenTables
-        disabled={checking || !name.trim()}
+        disabled={checking}
         onPick={(pickedCode, hostPubkey) => {
           setTyped(pickedCode);
           void submit(pickedCode, hostPubkey);
