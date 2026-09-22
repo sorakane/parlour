@@ -647,6 +647,12 @@ export class MultiplayerRoomSession {
       }
       this.transport?.holdLobby(false);
       this.update({ stage: 'table', error: null });
+      // The opening snapshot is not an applied move, so it never reaches
+      // accept(), which normally schedules the next CPU turn.
+      if (this.veil) {
+        await this.openBotHandles();
+      }
+      this.driveBotSeats();
     } catch (error) {
       this.update({ error: startFault(error) });
       throw error;
@@ -1826,7 +1832,7 @@ export class MultiplayerRoomSession {
    */
   private driveBotSeats(): void {
     if (!this.snapshot.isHost || !this.authority || !this.snapshot.settings) return;
-    if (this.snapshot.security.paused) return;
+    if (this.snapshot.stage !== 'table' || this.snapshot.security.paused) return;
     const session = this.authority.getSession();
     const botSeats = this.snapshot.seats.filter((seat) => seat.bot).map((seat) => seat.seat);
     if (botSeats.length === 0) return;

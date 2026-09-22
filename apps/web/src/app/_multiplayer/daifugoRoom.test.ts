@@ -1,12 +1,14 @@
-import { stateHash, makeRng } from '@parlour/engine';
+import { stateHash, makeRng, createSession } from '@parlour/engine';
 import {
+  daifugoGame,
   daifugoConfig,
   daifugoBots,
   type DaifugoState,
   type DaifugoRules,
 } from '@parlour/game-daifugo';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NostrSignaling, type SignalPayload } from '@/lib/multiplayer/NostrSignaling';
+import { DealSeedRound } from '@/lib/multiplayer/dealSeed';
 import type { RoomSettings } from '@/lib/multiplayer/types';
 import { MultiplayerRoomSession, multiplayerSession } from './roomSession';
 type SignalHandler = (sender: string, signal: SignalPayload) => void;
@@ -185,6 +187,59 @@ async function eventually(assertion: () => void, attempts = 500, delayMs = 10) {
 describe('Daifugo room recovery', () => {
   const opened: MultiplayerRoomSession[] = [];
   afterEach(() => opened.splice(0).forEach((peer) => peer.close()));
+  it.each([2, 3])(
+    'starts a mixed room when CPU seat %i plays first',
+    async (firstBot) => {
+      const config = daifugoConfig.resolve({ firstPlayer: 'random' });
+      const seedFor = (seat: number) => {
+        for (let seed = 1; seed < 1000; seed++) {
+          if (createSession(daifugoGame, { seed, seats: 4, config }).phase.actor === seat)
+            return seed;
+        }
+        throw new Error('No fixture seed');
+      };
+      const broker = new MockSignalingBroker();
+      const rtc = new MockRtcNetwork();
+      const peers = [0, 1].map((seat) => {
+        const peer = new MultiplayerRoomSession(
+          { name: `Human${seat}`, avatarId: 'ember', profileId: `mixed-${seat}` },
+          {
+            signaling: broker.signaling(`mixed-${seat}`),
+            peerConnection: rtc.factory(`mixed-${seat}`),
+            seed: seedFor(0),
+          },
+        );
+        opened.push(peer);
+        return peer;
+      });
+      // Fix only the shared deal's random seed; retain real seating, transport and timers.
+      const resolve = vi
+        .spyOn(DealSeedRound.prototype, 'resolve')
+        .mockResolvedValue(seedFor(firstBot));
+      try {
+        const [host, guest] = peers;
+        const room = await host!.create({ gameId: 'daifugo', seats: 4, config });
+        await guest!.join(room.code);
+        await eventually(() => expect(guest!.getSnapshot().localSeat).toBe(1));
+        host!.addBot(2);
+        host!.addBot(3);
+        expect(host!.getSnapshot().stage).toBe('lobby');
+        await host!.start();
+        expect(host!.getSnapshot().session?.phase.actor).toBe(firstBot);
+        await eventually(() => {
+          const h = host!.getSnapshot();
+          const g = guest!.getSnapshot();
+          expect(h.session!.log.length).toBeGreaterThan(0);
+          expect(stateHash(g.session!.state)).toBe(stateHash(h.session!.state));
+          expect(h.error).toBeNull();
+          expect(g.error).toBeNull();
+        }, 1000);
+      } finally {
+        resolve.mockRestore();
+      }
+    },
+    25_000,
+  );
   it('changes lobby rules without replacing the invite, syncs existing and late guests, and locks at start', async () => {
     const broker = new MockSignalingBroker();
     const rtc = new MockRtcNetwork();
