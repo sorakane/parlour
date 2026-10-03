@@ -21,6 +21,13 @@ import { daifugoDeck, tryOrder, isJoker } from './deck';
 import { DaifugoState, StandingSet, type DaifugoRole } from './state';
 import { DaifugoRules, daifugoConfig } from './config';
 import { daifugoBots } from './bots';
+import {
+  completedResult,
+  previousFinishOrder,
+  previousRoleFor,
+  recordDealResult,
+  roleForPlace,
+} from './rankings';
 import { playEffects, forbiddenFinishReason } from './effects';
 import {
   resolvePlay,
@@ -105,14 +112,7 @@ function nextActiveSeat(state: DaifugoState, from: SeatId): SeatId | null {
 
 /** Finish-order role lookup: index 0 is daifugo, the last index is scum. */
 export function roleFor(order: readonly SeatId[], seat: SeatId): DaifugoRole | null {
-  const index = order.indexOf(seat);
-  if (index < 0) return null;
-  const last = order.length - 1;
-  if (index === 0) return 'daifugo';
-  if (index === 1) return 'vice';
-  if (index === last) return 'scum';
-  if (index === last - 1) return 'vice-scum';
-  return 'neutral';
+  return roleForPlace(order.indexOf(seat) + 1, order.length);
 }
 
 /** Cards a role donates from their fresh hand at the start of the next deal. */
@@ -252,10 +252,11 @@ function collectCards(state: DaifugoState): CardId[] {
 
 /** Seats owing a gift this transition, in finish order (vice-scum before scum). */
 function exchangeGivers(state: DaifugoState): SeatId[] {
-  if (!state.rules.trading || state.seats < 4 || !state.lastOrder) return [];
-  const order = state.lastOrder;
+  const order = previousFinishOrder(state);
+  if (!state.rules.trading || state.seats < 4 || !order) return [];
   return order.filter(
-    (seat) => giftCountFor(roleFor(order, seat) ?? 'neutral', state.rules.exchangeCount) > 0,
+    (seat) =>
+      giftCountFor(previousRoleFor(state, seat) ?? 'neutral', state.rules.exchangeCount) > 0,
   );
 }
 
@@ -271,6 +272,9 @@ interface DealContext extends MoveCtx {
  * opaque handles stay opaque, they merely change owner.
  */
 function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
+  // Capture/migrate places before deriving a separate next-game turn order.
+  const lastResult = completedResult(state);
+  const rankOrder = previousFinishOrder(state);
   const pool =
     state.deal < 0
       ? dealOrder({ rng: ctx.rng, deckOrder: ctx.deckOrder }, daifugoDeck(state.rules.jokerCount))
@@ -281,17 +285,19 @@ function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
     ...state,
     ...freshTrick(),
     captured: [],
+    lastResult,
+    lastOrder: rankOrder ? [...rankOrder] : null,
     revolution: false,
     eliminated: [],
     pendingPlay: null,
     seatOrder:
       state.rules.seatOrder === 'random'
         ? ctx.rng.shuffle(state.seatOrder)
-        : state.rules.seatOrder === 'rank-ascending' && state.lastOrder
-          ? [...state.lastOrder].reverse()
-          : state.rules.seatOrder === 'rank' && state.lastOrder
-            ? [...state.lastOrder]
-            : state.seatOrder,
+        : state.rules.seatOrder === 'rank-ascending' && rankOrder
+          ? [...rankOrder].reverse()
+          : state.rules.seatOrder === 'rank' && rankOrder
+            ? [...rankOrder]
+            : [...state.seatOrder],
     finished: [],
     awaitingGive: [],
     awaitingReturn: null,
@@ -300,19 +306,19 @@ function openDeal(state: DaifugoState, ctx: DealContext): DaifugoState {
     deal: state.deal + 1,
     hands: dealHands(state.seats, shuffled, startSeat, ctx.fx),
   };
-  const leader = mid.lastOrder
+  const leader = rankOrder
     ? mid.rules.nextLeader === 'random'
       ? startSeat
       : mid.rules.nextLeader === 'first'
-        ? mid.lastOrder[0]!
-        : mid.lastOrder[mid.lastOrder.length - 1]!
+        ? rankOrder[0]!
+        : rankOrder[rankOrder.length - 1]!
     : mid.rules.firstPlayer === 'diamond3'
       ? mid.hands.findIndex((hand) => hand.includes('D3'))
       : startSeat;
   const ready = {
     ...mid,
     dealLeader: leader,
-    openingCard: !mid.lastOrder && mid.rules.firstPlayer === 'diamond3' ? 'D3' : null,
+    openingCard: !rankOrder && mid.rules.firstPlayer === 'diamond3' ? 'D3' : null,
   };
   const givers = exchangeGivers(ready);
   if (givers.length > 0) return { ...ready, awaitingGive: givers };
@@ -326,12 +332,12 @@ function completeDeal(state: DaifugoState, ctx: MoveCtx): DaifugoState {
   for (const seat of activeSeats(state)) finished.push(seat);
   for (const entry of [...state.eliminated].reverse())
     if (!finished.includes(entry.seat)) finished.push(entry.seat);
-  const score = state.score.slice();
+  const lastResult = recordDealResult(state.deal, state.seats, finished);
+  const score = state.score.map(
+    (points, seat) => points + pointsForFinish(state.seats, lastResult.placeBySeat[seat]! - 1),
+  );
   finished.forEach((seat, index) => {
-    score[seat] = (score[seat] ?? 0) + pointsForFinish(state.seats, index);
-  });
-  finished.forEach((seat, index) => {
-    const role = roleFor(finished, seat) ?? 'neutral';
+    const role = roleForPlace(lastResult.placeBySeat[seat]!, state.seats)!;
     ctx.fx.emit(DaifugoFx.Role, { seat, role, deal: state.deal }, index * ROLE_STAGGER_MS);
   });
   ctx.fx.emit(Fx.RoundEnd, { reason: 'deal-complete' }, finished.length * ROLE_STAGGER_MS);
@@ -341,7 +347,8 @@ function completeDeal(state: DaifugoState, ctx: MoveCtx): DaifugoState {
     captured: [...state.captured, ...state.pile],
     finished,
     score,
-    lastOrder: finished,
+    lastResult,
+    lastOrder: [...finished],
     pendingPlay: null,
     awaitingGive: [],
     awaitingReturn: null,
@@ -472,7 +479,7 @@ function continuePlay(state: DaifugoState, ctx: MoveCtx): DaifugoState {
     else {
       next = { ...next, finished: [...next.finished, seat] };
       ctx.fx.emit(DaifugoFx.Out, { seat, place: next.finished.length }, SET_STAGGER_MS * 2);
-      const previousWinner = next.lastOrder?.[0];
+      const previousWinner = previousFinishOrder(next)?.[0];
       if (
         next.rules.miyako &&
         next.finished.length === 1 &&
@@ -657,11 +664,11 @@ function exchangeFlight(ctx: MoveCtx, from: SeatId, to: SeatId, cards: readonly 
 
 const giveCards: Move<DaifugoState> = {
   validate(state, seat, payload) {
-    if (!state.lastOrder) return error('no-roles', 'no roles exist yet');
+    if (!completedResult(state)) return error('no-roles', 'no roles exist yet');
     if (!state.awaitingGive.includes(seat)) return error('not-giving', 'this seat owes no gift');
     const cards = payloadCardList(payload);
     if (!cards) return error('bad-payload', 'expected {cards: string[]}');
-    const role = roleFor(state.lastOrder, seat);
+    const role = previousRoleFor(state, seat);
     const expected = giftCountFor(role ?? 'neutral', state.rules.exchangeCount);
     if (cards.length !== expected) {
       return error('wrong-count', `this seat gives ${expected} card(s)`);
@@ -686,7 +693,7 @@ const giveCards: Move<DaifugoState> = {
   },
   apply(state, seat, payload, ctx) {
     const cards = payloadCardList(payload)!;
-    const order = state.lastOrder!;
+    const order = previousFinishOrder(state)!;
     const recipient = counterpartOf(order, seat)!;
     exchangeFlight(ctx, seat, recipient, cards);
     let next: DaifugoState = {
@@ -720,7 +727,7 @@ const returnCards: Move<DaifugoState> = {
   },
   apply(state, seat, payload, ctx) {
     const cards = payloadCardList(payload)!;
-    const order = state.lastOrder!;
+    const order = previousFinishOrder(state)!;
     const recipient = counterpartOf(order, seat)!;
     exchangeFlight(ctx, seat, recipient, cards);
     let next: DaifugoState = {
@@ -843,6 +850,7 @@ function initialState(seats: number, rules: DaifugoRules): DaifugoState {
     ...freshTrick(),
     captured: [],
     finished: [],
+    lastResult: null,
     lastOrder: null,
     awaitingGive: [],
     awaitingReturn: null,

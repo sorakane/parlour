@@ -1,5 +1,11 @@
 import { createSession, sessionApply, stateHash, type GameSession } from '@parlour/engine';
-import { roleFor, type DaifugoRules, type DaifugoState } from '@parlour/game-daifugo';
+import {
+  completedResult,
+  previousFinishOrder,
+  previousRoleFor,
+  type DaifugoRules,
+  type DaifugoState,
+} from '@parlour/game-daifugo';
 
 export const DAIFUGO_ROLE_LABELS: Record<string, string> = {
   daifugo: '大富豪',
@@ -76,18 +82,16 @@ export function daifugoRankReport(
   return {
     format: 'daifugo-rank-report-v1',
     game: session.state.deal + 1,
-    rankedGame: session.state.lastOrder
-      ? session.state.deal + (session.state.finished.length === session.seats ? 1 : 0)
-      : null,
+    rankedGame: completedResult(session.state) ? completedResult(session.state)!.deal + 1 : null,
     localSeat,
     rules: session.config,
     players: players.map(({ seat, name }) => ({ seat, name })),
     events,
-    previousRanks: (session.state.lastOrder ?? []).map((seat, index) => ({
+    previousRanks: (previousFinishOrder(session.state) ?? []).map((seat, index) => ({
       seat,
       name: name(seat),
       rank: index + 1,
-      role: DAIFUGO_ROLE_LABELS[roleFor(session.state.lastOrder!, seat)!],
+      role: DAIFUGO_ROLE_LABELS[previousRoleFor(session.state, seat)!],
     })),
     turnOrder: session.state.seatOrder.map((seat) => ({ seat, name: name(seat) })),
     verified: !error && replay.log.length === session.log.length && observedHash === replayHash,

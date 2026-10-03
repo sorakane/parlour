@@ -23,3 +23,12 @@ export {
 
 export { MAX_PLAY_SIZE } from './deck';
 export { playEffects, forbiddenFinishReason } from './effects';
+
+export {
+  completedResult,
+  previousFinishOrder,
+  previousRoleFor,
+  recordDealResult,
+  roleForPlace,
+} from './rankings';
+export type { DaifugoDealResult } from './state';

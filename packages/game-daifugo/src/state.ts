@@ -32,6 +32,12 @@ export interface PendingPlay {
 
 export type DaifugoRole = 'daifugo' | 'vice' | 'neutral' | 'vice-scum' | 'scum';
 
+/** A completed game's places, keyed by stable player id, never by turn position. */
+export interface DaifugoDealResult {
+  readonly deal: number;
+  readonly placeBySeat: Readonly<Record<SeatId, number>>;
+}
+
 /**
  * One Daifugo session spans the whole match: deals, exchanges and score
  * accrual live in a single deterministic log. `deal` is the 0-based index of
@@ -70,7 +76,9 @@ export interface DaifugoState {
   lockedOut: readonly SeatId[];
   /** this deal's finish order so far; the last seat left standing is scum */
   finished: readonly SeatId[];
-  /** finish order of the previous deal, or null before any deal completed */
+  /** Authoritative completed result. Optional only for pre-migration snapshots. */
+  lastResult?: DaifugoDealResult | null;
+  /** Legacy finish-order mirror; never use this array to assign ranks or roles. */
   lastOrder: readonly SeatId[] | null;
   /** seats still owing their exchange gift */
   awaitingGive: readonly SeatId[];

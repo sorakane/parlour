@@ -1,6 +1,7 @@
 import type { BotPolicy } from '@parlour/engine';
 import type { DaifugoState } from './state';
-import { giftCountFor, roleFor } from './game';
+import { giftCountFor } from './game';
+import { previousRoleFor } from './rankings';
 import { orderOf, isJoker } from './deck';
 import { resolvePlay, reversed } from './combinations';
 import { forbiddenFinishReason } from './effects';
@@ -22,7 +23,7 @@ export const daifugoBots: readonly BotPolicy<DaifugoState>[] = ([1, 2, 3] as con
     const returning = legal.find((move) => move.id === 'returnCards');
     if (gift || returning) {
       const count = gift
-        ? giftCountFor(roleFor(view.lastOrder ?? [], seat) ?? 'neutral', view.rules.exchangeCount)
+        ? giftCountFor(previousRoleFor(view, seat) ?? 'neutral', view.rules.exchangeCount)
         : view.awaitingReturn!.count;
       const cards = hand
         .filter((card) => !gift || !view.rules.excludeJokersFromExchange || !isJoker(card))

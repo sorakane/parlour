@@ -4,7 +4,7 @@ import {
   type JokerAssignments,
   validateCombination,
   MIN_SEATS,
-  roleFor,
+  previousRoleFor,
   giftCountFor,
   type DaifugoState,
 } from '@parlour/game-daifugo';
@@ -105,18 +105,17 @@ export function daifugoTableView(
     }
   }
 
-  const order = state.lastOrder;
   const players = snapshot.players.map((player) => ({
     ...player,
     handCount: state.hands[player.seat]?.length ?? 0,
     score: state.score[player.seat] ?? 0,
     isLocal: player.seat === localSeat,
     eliminatedReason: state.eliminated.find((entry) => entry.seat === player.seat)?.reason ?? null,
-    role: order ? (roleFor(order, player.seat) ?? null) : null,
+    role: previousRoleFor(state, player.seat),
   }));
 
   const giveCount = hasGive
-    ? giftCountFor(roleFor(order ?? [], localSeat) ?? 'neutral', state.rules.exchangeCount)
+    ? giftCountFor(previousRoleFor(state, localSeat) ?? 'neutral', state.rules.exchangeCount)
     : 0;
   const returnCount = hasReturn ? (state.awaitingReturn?.count ?? 0) : 0;
 
