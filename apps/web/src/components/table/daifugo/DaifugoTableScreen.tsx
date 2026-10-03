@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { type FxEvent } from '@parlour/engine';
 import { type FxCue } from '@/lib/table/fx-motion';
@@ -62,6 +62,7 @@ const EMPTY_SELECTION: readonly string[] = [];
 
 export type DaifugoTableScreenProps = {
   view: DaifugoTableView | null;
+  rankRecord?: ReactNode;
   fx: readonly FxEvent[];
   fxKey: string | number;
   busy?: boolean;
@@ -254,6 +255,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
           />
         </TablePlayfield>
 
+        {props.rankRecord}
         <DaifugoPresentation view={view} fx={props.fx} fxKey={props.fxKey} />
         <TableActionRail className={daifugoStyles.actions}>
           <span className={daifugoStyles.order} aria-live="polite" data-testid="daifugo-order">

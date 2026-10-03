@@ -1,6 +1,7 @@
 'use client';
 
 import type { DaifugoRules, DaifugoState } from '@parlour/game-daifugo';
+import { DaifugoRankRecord } from '@/components/table/daifugo/DaifugoRankRecord';
 import { DaifugoTableScreen } from '@/components/table/daifugo/DaifugoTableScreen';
 import { defineTablePack, turnBasedDriver } from '@/components/table/GameTablePage';
 import { daifugoModeForRules } from '@/lib/daifugo/modes';
@@ -74,6 +75,9 @@ export const daifugoTablePack = defineTablePack<
     return (
       <DaifugoTableScreen
         view={daifugoTableView(snapshot, actingLocally ? localLegalMoves(snapshot) : [])}
+        rankRecord={
+          <DaifugoRankRecord session={snapshot.session} players={snapshot.players} localSeat={0} />
+        }
         fx={fx}
         fxKey={fxKey}
         busy={!actingLocally}
@@ -134,6 +138,13 @@ export const daifugoTablePack = defineTablePack<
     return (
       <DaifugoTableScreen
         view={daifugoTableView(snapshotView, legal, localSeat)}
+        rankRecord={
+          <DaifugoRankRecord
+            session={session}
+            players={snapshotView.players}
+            localSeat={localSeat}
+          />
+        }
         fx={snapshot.fx}
         fxKey={snapshot.fxKey}
         busy={!isLocalActing}

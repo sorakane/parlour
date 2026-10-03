@@ -71,3 +71,38 @@
 .pileSet.pileSet > [data-card-chassis] + [data-card-chassis] {
   margin-left: calc(var(--pile-step) - var(--pile-card-width));
 }
+
+.rankRecord {
+  margin: 0.5rem 1rem;
+  padding: 0.75rem;
+  border-left: 3px solid #df0024;
+  background: #111;
+  color: #fff8ec;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.rankRecord summary {
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 44px;
+  align-content: center;
+}
+.rankRecord h3 {
+  margin-top: 1rem;
+  font-weight: 800;
+}
+.rankRecord ol,
+.rankRecord ul {
+  list-style: none;
+  padding: 0;
+}
+.rankRecordActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.rankRecordActions button {
+  min-height: 44px;
+}
