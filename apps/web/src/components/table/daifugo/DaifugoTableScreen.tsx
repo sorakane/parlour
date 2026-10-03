@@ -203,6 +203,7 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
         className={`${visual.theme} ${visual.board}`}
         dealState={dealStateAttr(deal)}
         menu={menu}
+        menuContent={props.rankRecord}
         hud={
           <div className={visual.boardHud}>
             <div className={visual.boardBrand}>
@@ -255,7 +256,6 @@ export function DaifugoTableScreen(props: DaifugoTableScreenProps) {
           />
         </TablePlayfield>
 
-        {props.rankRecord}
         <DaifugoPresentation view={view} fx={props.fx} fxKey={props.fxKey} />
         <TableActionRail className={daifugoStyles.actions}>
           <span className={daifugoStyles.order} aria-live="polite" data-testid="daifugo-order">

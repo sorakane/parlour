@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { HowToPlayDoc } from '@parlour/engine';
 import { HowToPlayButton } from '@/components/HowToPlay';
 import { useT, type MessageKey } from '@/lib/i18n';
@@ -33,6 +33,7 @@ const DROP_EFFECT_KEYS: Record<DropEffectLevel, MessageKey> = {
 };
 
 export type TableMenuProps = {
+  children?: ReactNode;
   /** The running game's instructions, so rules stay reachable mid-match. */
   howToPlay?: { doc: HowToPlayDoc; title: string; subtitle?: string };
   open: boolean;
@@ -41,7 +42,7 @@ export type TableMenuProps = {
   onQuit: () => void;
 };
 
-export function TableMenu({ open, onClose, onQuit, howToPlay }: TableMenuProps) {
+export function TableMenu({ open, onClose, onQuit, howToPlay, children }: TableMenuProps) {
   const t = useT();
   const dialogRef = useRef<HTMLDivElement>(null);
   const resumeRef = useRef<HTMLButtonElement>(null);
@@ -102,6 +103,7 @@ export function TableMenu({ open, onClose, onQuit, howToPlay }: TableMenuProps) 
         ) : (
           <>
             <h2 className={styles.menuTitle}>{t('table.menu')}</h2>
+            {children && <div className={styles.menuSectionWide}>{children}</div>}
             <div className={styles.menuToggles}>
               <button
                 type="button"

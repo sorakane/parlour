@@ -12,6 +12,7 @@ export type TableScreenFrameProps = Omit<TableShellProps, 'children'> & {
   /** Everything left of the shared menu affordance. */
   hud: ReactNode;
   menu: TableMenuController;
+  menuContent?: ReactNode;
   howToPlay?: { doc: HowToPlayDoc; title: string; subtitle?: string };
   children: ReactNode;
 };
@@ -27,6 +28,7 @@ export function TableScreenFrame({
   dealState,
   hud,
   menu,
+  menuContent,
   howToPlay,
   children,
 }: TableScreenFrameProps) {
@@ -35,7 +37,9 @@ export function TableScreenFrame({
       <TableHud onOpenMenu={menu.open}>{hud}</TableHud>
       {children}
       <TableCountdown />
-      <TableMenu open={menu.isOpen} onClose={menu.close} onQuit={menu.quit} howToPlay={howToPlay} />
+      <TableMenu open={menu.isOpen} onClose={menu.close} onQuit={menu.quit} howToPlay={howToPlay}>
+        {menuContent}
+      </TableMenu>
     </TableShell>
   );
 }
