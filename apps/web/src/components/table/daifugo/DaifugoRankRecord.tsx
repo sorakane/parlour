@@ -27,10 +27,12 @@ export function DaifugoRankRecord({
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = `daifugo-ranks-game-${current.game}.json`;
+    document.body.appendChild(anchor);
     anchor.click();
+    anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const latestGame = report?.previousRanks.length ? report.game - 1 : report?.game;
+  const latestGame = report?.rankedGame ?? report?.game;
   return (
     <details
       className={styles.rankRecord}
@@ -42,7 +44,7 @@ export function DaifugoRankRecord({
       {report && (
         <>
           <p>第{report.game}ゲーム時点の記録</p>
-          <h3>前ゲームの確定順位</h3>
+          <h3>{report.rankedGame ? `第${report.rankedGame}ゲームの確定順位` : '確定順位'}</h3>
           {report.previousRanks.length ? (
             <ol>
               {report.previousRanks.map((player) => (

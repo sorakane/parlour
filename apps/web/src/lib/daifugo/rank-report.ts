@@ -76,6 +76,9 @@ export function daifugoRankReport(
   return {
     format: 'daifugo-rank-report-v1',
     game: session.state.deal + 1,
+    rankedGame: session.state.lastOrder
+      ? session.state.deal + (session.state.finished.length === session.seats ? 1 : 0)
+      : null,
     localSeat,
     rules: session.config,
     players: players.map(({ seat, name }) => ({ seat, name })),
